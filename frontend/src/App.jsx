@@ -23,6 +23,9 @@ import { useThemeStore } from './store/useThemeStore.js';
 import PasswordResetPage from './pages/PasswordResetPage.jsx';
 import AddFacePage from './pages/AddFacePage.jsx';
 import RoadmapPage from './pages/RoadeMapPage.jsx';
+import InterviewSetupPage from './pages/InterviewSetupPage.jsx';
+import LiveInterview from './pages/LiveInterview.jsx';
+import InterviewResult from '../../backend/src/models/InterviewResult.js';
 
 
 
@@ -182,6 +185,42 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <RoadmapPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+            )
+          }
+        />
+        <Route
+          path="/create-interview"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <InterviewSetupPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+            )
+          }
+        />
+        <Route
+          path="/interview/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <LiveInterview />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+            )
+          }
+        />
+        <Route
+          path="/result/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <InterviewResult />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />

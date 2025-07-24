@@ -195,3 +195,44 @@ export const getRoadmap = async (userId) => {
   const response = await axiosInstance.get(`/roadmap/get-roadmap/${userId}`);
   return response.data;
 };
+
+
+
+
+export const createInterview = async (body) => {
+  try {
+    const response = await axiosInstance.post("/interview", body);
+    console.log("API Response:", response.data); // Log for debugging
+    return response.data;
+  } catch (error) {
+    console.error("Error creating interview:", error);
+    throw error;
+  }
+};
+
+export const getInterview = async (userId) => {
+  const response = await axiosInstance.get(`/interview/user/${userId}`);
+  return response.data;
+};
+
+export const startInterview = async (interviewId) => {
+  const response = await axiosInstance.patch(`/interview/${interviewId}/start`);
+  return response.data;
+};
+
+export const endInterview = async (interviewId) => {
+  const response = await axiosInstance.patch(`/interview/${interviewId}/end`);
+  return response.data;
+};
+
+// Fetch the next question in an interview
+export const nextQuestion = async (payload) => {
+  const response = await axiosInstance.post('/interview/next-question', payload);
+  return response.data;
+};
+
+// Get interview result
+export const getResult = async (interviewId) => {
+  const response = await axiosInstance.get(`/result/${interviewId}`);
+  return response.data;
+};

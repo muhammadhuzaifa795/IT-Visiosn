@@ -6,8 +6,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { inngest } from "./inngest/client.js";
-import {serve} from "inngest/express";
+import { serve } from "inngest/express";
 import { generateRoadmapFn } from "./inngest/functions/roadmap.function.js";
+import { evalFlow } from "./inngest/functions/interview.function.js";
+import Interview from "./models/Interview.js";
+import { generateQuestion } from "./inngest/agent.js";
 
 // Routes
 import authRoutes from "./routes/auth.route.js";
@@ -19,22 +22,19 @@ import cvRoutes from "./routes/cv.route.js";
 import commentRoutes from "./routes/comment.route.js";
 import faceAuthRoutes from "./routes/face-auth.route.js";
 import roadMapRoutes from "./routes/road-map.route.js";
-
-
-// Socket emitter integration
+import interviewRoutes from "./routes/interview.route.js";
+import resultRoutes from "./routes/result.routes.js";
 import { setSocketIOInstance } from "./controllers/post.controller.js";
 import { connectDB } from "./lib/db.js";
 
 const app = express();
 const server = http.createServer(app);
 
-// 💡 DevTunnel and Local Origins
 const allowedOrigins = [
-  "http://localhost:5174",
-  "https://k5dnkszc-5174.inc1.devtunnels.ms"
+  "http://localhost:5173",
+  "https://qs93k5gj-5173.inc1.devtunnels.ms",
 ];
 
-// Socket.io Setup with CORS
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -48,12 +48,63 @@ io.on("connection", (socket) => {
 
   socket.on("join_post", (postId) => {
     socket.join(postId);
-    console.log(`🔗 User joined room: ${postId}`);
+    console.log(`🔗 User joined post room: ${postId}`);
   });
 
   socket.on("leave_post", (postId) => {
     socket.leave(postId);
-    console.log(`❌ User left room: ${postId}`);
+    console.log(`❌ User left post room: ${postId}`);
+  });
+
+  socket.on("join-room", async (interviewId) => {
+    if (!interviewId || typeof interviewId !== "string") {
+      console.error("Invalid interviewId for join-room:", interviewId);
+      socket.emit("error", "Invalid interview ID");
+      return;
+    }
+    socket.join(interviewId);
+    console.log(`🔗 User joined interview room: ${interviewId}`);
+
+    try {
+      const interview = await Interview.findById(interviewId);
+      if (!interview) {
+        socket.emit("error", "Interview not found");
+        return;
+      }
+      const { topic, level } = interview;
+      const question = await generateQuestion(level, topic);
+      console.log(`Emitting question for interview ${interviewId}:`, question);
+      io.to(interviewId).emit("question", question);
+    } catch (error) {
+      console.error("Error generating question:", error);
+      socket.emit("error", "Failed to generate question");
+    }
+  });
+
+  socket.on("answer", async ({ interviewId, question, answer }) => {
+    if (!interviewId || !answer || typeof interviewId !== "string" || typeof answer !== "string") {
+      console.error("Invalid answer data:", { interviewId, answer });
+      socket.emit("error", "Invalid answer data");
+      return;
+    }
+    console.log(`📝 Answer submitted for interview ${interviewId}:`, { question, answer });
+    io.to(interviewId).emit("transcript", answer);
+
+    // Generate next question
+    try {
+      const interview = await Interview.findById(interviewId);
+      if (!interview) {
+        socket.emit("error", "Interview not found");
+        return;
+      }
+      const { topic, level } = interview;
+      const nextQuestion = await generateQuestion(level, topic);
+      console.log(`Emitting next question for interview ${interviewId}:`, nextQuestion);
+      io.to(interviewId).emit("question", nextQuestion);
+    } catch (error) {
+      console.error("Error generating next question:", error);
+      socket.emit("error", "Failed to generate next question");
+    }
   });
 
   socket.on("disconnect", () => {
@@ -90,11 +141,13 @@ app.use("/api/cv", cvRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/face-auth", faceAuthRoutes);
 app.use("/api/roadmap", roadMapRoutes);
+app.use("/api/interview", interviewRoutes);
+app.use("/api/results", resultRoutes);
 app.use(
   "/api/inngest",
   serve({
     client: inngest,
-    functions: [generateRoadmapFn],
+    functions: [generateRoadmapFn, evalFlow],
   })
 );
 

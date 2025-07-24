@@ -4,7 +4,7 @@ import axios from "axios";
 const isDevTunnel = location.origin.includes(".devtunnels.ms");
 
 const BASE_URL = isDevTunnel
-  ? "https://k5dnkszc-5000.inc1.devtunnels.ms/api"
+  ? "https://qs93k5gj-5000.inc1.devtunnels.ms/api"
   : import.meta.env.MODE === "development"
   ? "http://localhost:5000/api"
   : "https://your-production-backend.com/api";
