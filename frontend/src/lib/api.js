@@ -232,4 +232,9 @@ export const getUserResults = async (userId) => {
   return response.data
 }
 
+export const deleteUserResults =  async (resultId) => {
+  const response = await axiosInstance.delete(`/results/delete/${resultId}`)
+  return response.data
+}
+
 

@@ -62,3 +62,28 @@ export const getAllResultsByUser = async (req, res) => {
     })
   }
 }
+
+
+export const deleteResult = async (req,res)=>{
+  try {
+    const resultId =  req.params;
+
+    if(!resultId){
+      res.status(400).json({
+        success:false,
+        message:"coludn't be get reslutid"
+      });
+    }
+    res.json({
+      success: true,
+      data: res,
+    })
+    const res =  InterviewResult.findByIdAndDelete({id:resultId})
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to to delete results",
+    })
+  }
+}

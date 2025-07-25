@@ -7,6 +7,7 @@ import {
   submitAnswer,
   getInterviewResults,
   getUserResults,
+  deleteUserResults,
 } from "../lib/api"
 
 
@@ -78,5 +79,15 @@ export const useGetAllResults = (userId) => {
     queryFn: () => getUserResults(userId), // <-- use correct function
     enabled: !!userId,
   })
-
 }
+
+export const useDeleteUserResults = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (resultId) => deleteUserResults(resultId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["allResults"]); // refetch updated data
+    },
+  });
+};
