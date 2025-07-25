@@ -23,6 +23,7 @@ import { useThemeStore } from "./store/useThemeStore.js"
 import PasswordResetPage from "./pages/PasswordResetPage.jsx"
 import AddFacePage from "./pages/AddFacePage.jsx"
 import RoadmapPage from "./pages/RoadeMapPage.jsx"
+import LandingPage from "./pages/LandingPage.jsx"
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx"
@@ -68,6 +69,11 @@ const App = () => {
         <Route
           path="/signup"
           element={!isAuthenticated ? <SignUpPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />}
+        />
+
+        <Route
+          path="/landing"
+          element={!isAuthenticated ? <LandingPage /> : <Navigate to={ "/" } />}
         />
         <Route path="/add-face" element={<AddFacePage />} />
         <Route path="/password-reset" element={<PasswordResetPage />} />
