@@ -2,7 +2,7 @@
 
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { BellIcon, HomeIcon, PodcastIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon,MapIcon } from "lucide-react";
+import { BellIcon, HomeIcon, PodcastIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon,MapIcon,UserRound  } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -72,6 +72,7 @@ const Sidebar = () => {
     { to: "/cv-list", label: "CV", icon: FileTextIcon },
     { to: "/ai-prompt", label: "AI Prompt", icon: Code2Icon },
     { to: "/roadmap", label: "Road Map", icon: MapIcon },
+    { to: "/interviews", label: "Mock Interview", icon: UserRound  },
     { to: "/friends", label: "Friends", icon: UsersIcon },
     { to: "/users", label: "Users", icon: UsersIcon },
     { to: "/notifications", label: "Notifications", icon: BellIcon },

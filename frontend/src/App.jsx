@@ -1,42 +1,42 @@
-import { Navigate, Route, Routes } from 'react-router';
-import HomePage from './pages/HomePage.jsx';
-import SignUpPage from './pages/SignUpPage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import NotificationsPage from './pages/NotificationsPage.jsx';
-import CallPage from './pages/CallPage.jsx';
-import ChatPage from './pages/ChatPage.jsx';
-import OnboardingPage from './pages/OnboardingPage.jsx';
-import UserPage from './pages/UserPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import UploadPost from './pages/UploadPost.jsx';
-import PostDetail from './pages/PostDetail.jsx';
-import AIPromptPage from './pages/AIPromptPage.jsx';
-import CVList from './pages/CVList.jsx';
-import CVForm from './pages/CVForm.jsx';
-import CVPreview from './components/CVPreview.jsx';
-import Friends from './pages/Friends.jsx';
-import { Toaster } from 'react-hot-toast';
-import PageLoader from './components/PageLoader.jsx';
-import useAuthUser from './hooks/useAuthUser.js';
-import Layout from './components/Layout.jsx';
-import { useThemeStore } from './store/useThemeStore.js';
-import PasswordResetPage from './pages/PasswordResetPage.jsx';
-import AddFacePage from './pages/AddFacePage.jsx';
-import RoadmapPage from './pages/RoadeMapPage.jsx';
-import InterviewSetupPage from './pages/InterviewSetupPage.jsx';
-import LiveInterview from './pages/LiveInterview.jsx';
-import InterviewResult from '../../backend/src/models/InterviewResult.js';
+import { Navigate, Route, Routes } from "react-router"
+import HomePage from "./pages/HomePage.jsx"
+import SignUpPage from "./pages/SignUpPage.jsx"
+import LoginPage from "./pages/LoginPage.jsx"
+import NotificationsPage from "./pages/NotificationsPage.jsx"
+import CallPage from "./pages/CallPage.jsx"
+import ChatPage from "./pages/ChatPage.jsx"
+import OnboardingPage from "./pages/OnboardingPage.jsx"
+import UserPage from "./pages/UserPage.jsx"
+import ProfilePage from "./pages/ProfilePage.jsx"
+import UploadPost from "./pages/UploadPost.jsx"
+import PostDetail from "./pages/PostDetail.jsx"
+import AIPromptPage from "./pages/AIPromptPage.jsx"
+import CVList from "./pages/CVList.jsx"
+import CVForm from "./pages/CVForm.jsx"
+import CVPreview from "./components/CVPreview.jsx"
+import Friends from "./pages/Friends.jsx"
+import { Toaster } from "react-hot-toast"
+import PageLoader from "./components/PageLoader.jsx"
+import useAuthUser from "./hooks/useAuthUser.js"
+import Layout from "./components/Layout.jsx"
+import { useThemeStore } from "./store/useThemeStore.js"
+import PasswordResetPage from "./pages/PasswordResetPage.jsx"
+import AddFacePage from "./pages/AddFacePage.jsx"
+import RoadmapPage from "./pages/RoadeMapPage.jsx"
 
-
+// New Interview Pages
+import InterviewSetupPage from "./pages/InterviewSetupPage.jsx"
+import LiveInterview from "./pages/LiveInterview.jsx"
+import InterviewResultPage from "./pages/InterviewResultPage.jsx"
+import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx"
 
 const App = () => {
-  const { isLoading, authUser } = useAuthUser();
-  const { theme } = useThemeStore();
+  const { isLoading, authUser } = useAuthUser()
+  const { theme } = useThemeStore()
+  const isAuthenticated = Boolean(authUser)
+  const isOnboarded = authUser?.isOnboarded
 
-  const isAuthenticated = Boolean(authUser);
-  const isOnboarded = authUser?.isOnboarded;
-
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <PageLoader />
 
   return (
     <div className="min-h-screen" data-theme={theme}>
@@ -49,7 +49,7 @@ const App = () => {
                 <HomePage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -61,27 +61,19 @@ const App = () => {
                 <PostDetail />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
         <Route
           path="/signup"
-          element={!isAuthenticated ? <SignUpPage /> : <Navigate to={isOnboarded ? '/' : '/onboarding'} />}
+          element={!isAuthenticated ? <SignUpPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />}
         />
-
-        <Route
-          path="/add-face"
-          element={<AddFacePage />}
-        />
-
-        <Route
-          path="/password-reset"
-          element={<PasswordResetPage />}
-        />
+        <Route path="/add-face" element={<AddFacePage />} />
+        <Route path="/password-reset" element={<PasswordResetPage />} />
         <Route
           path="/login"
-          element={!isAuthenticated ? <LoginPage /> : <Navigate to={isOnboarded ? '/' : '/onboarding'} />}
+          element={!isAuthenticated ? <LoginPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />}
         />
         <Route
           path="/notifications"
@@ -91,14 +83,18 @@ const App = () => {
                 <NotificationsPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
         <Route
           path="/call/:id"
           element={
-            isAuthenticated && isOnboarded ? <CallPage /> : <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+            isAuthenticated && isOnboarded ? (
+              <CallPage />
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
           }
         />
         <Route
@@ -109,15 +105,13 @@ const App = () => {
                 <ChatPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
         <Route
           path="/onboarding"
-          element={
-            isAuthenticated ? (!isOnboarded ? <OnboardingPage /> : <Navigate to="/" />) : <Navigate to="/login" />
-          }
+          element={isAuthenticated ? !isOnboarded ? <OnboardingPage /> : <Navigate to="/" /> : <Navigate to="/login" />}
         />
         <Route
           path="/profile"
@@ -127,7 +121,7 @@ const App = () => {
                 <ProfilePage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -139,7 +133,7 @@ const App = () => {
                 <UploadPost />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -151,7 +145,7 @@ const App = () => {
                 <Friends />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -163,7 +157,7 @@ const App = () => {
                 <UserPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -175,7 +169,7 @@ const App = () => {
                 <AIPromptPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -187,7 +181,21 @@ const App = () => {
                 <RoadmapPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        {/* Interview Routes */}
+        <Route
+          path="/interviews"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <InterviewDashboardPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -199,7 +207,7 @@ const App = () => {
                 <InterviewSetupPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -207,11 +215,11 @@ const App = () => {
           path="/interview/:id"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={true}>
+              <Layout showSidebar={false}>
                 <LiveInterview />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
@@ -220,13 +228,14 @@ const App = () => {
           element={
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
-                <InterviewResult />
+                <InterviewResultPage />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
+
         <Route
           path="/cv-list"
           element={
@@ -235,11 +244,10 @@ const App = () => {
                 <CVList />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
-
         <Route
           path="/cv-form"
           element={
@@ -248,14 +256,10 @@ const App = () => {
                 <CVForm />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
-        import CVPreview from './components/CVPreview.jsx';
-
-        ...
-
         <Route
           path="/cv/preview/:userId"
           element={
@@ -264,15 +268,14 @@ const App = () => {
                 <CVPreview />
               </Layout>
             ) : (
-              <Navigate to={!isAuthenticated ? '/login' : '/onboarding'} />
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
-
       </Routes>
       <Toaster />
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

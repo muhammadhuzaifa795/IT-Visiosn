@@ -1,113 +1,159 @@
+"use client";
+
 import { useState } from "react";
-import  useInterview  from "../hooks/useInterview";
 import { useNavigate } from "react-router";
-import { PlayCircle } from "lucide-react";
+import { useCreateInterview } from "../hooks/useInterview";
+import useAuthUser from "../hooks/useAuthUser";
 
-export default function InterviewSetupPage() {
-  const [topic, setTopic] = useState("");
-  const [level, setLevel] = useState("easy");
-  const [duration, setDuration] = useState(5);
-  const [uniqueTopics] = useState(new Set()); // Set to track unique topics
-  const { createMutation } = useInterview();
+const InterviewSetupPage = () => {
   const navigate = useNavigate();
+  const { authUser } = useAuthUser();
+  const [formData, setFormData] = useState({
+    topic: "",
+    level: "beginner",
+    duration: 30,
+  });
 
-  const handleTopicChange = (e) => {
-    const newTopic = e.target.value;
-    setTopic(newTopic);
-    uniqueTopics.add(newTopic); // Add topic to Set
+  const createMutation = useCreateInterview();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "duration" ? Number.parseInt(value) : value,
+    }));
   };
 
-  const handleCreate = () => {
-    if (!topic.trim()) {
-      alert("Please enter a valid topic");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!authUser?._id) {
+      console.error("User not authenticated");
       return;
     }
-    createMutation.mutate(
-      { topic, level, duration },
-      {
-        onSuccess: (response) => {
-          // Handle different response structures
-          const interviewId = response?.data?.interviewId || response?.interviewId || response?._id;
-          if (!interviewId) {
-            console.error("No interviewId found in response:", response);
-            alert("Failed to retrieve interview ID. Please try again.");
-            return;
-          }
-          navigate(`/interview/${interviewId}`);
-        },
-        onError: (error) => {
-          console.error("Failed to create interview:", error);
-          alert("Failed to create interview. Please try again.");
-        },
-      }
-    );
+    try {
+      const result = await createMutation.mutateAsync({
+        ...formData,
+        userId: authUser.id,
+      });
+      navigate(`/interview/${result.data.interviewId}`);
+    } catch (error) {
+      console.error("Error creating interview:", error);
+    }
   };
 
-  return (
-    <div className="hero min-h-screen bg-base-200">
-      <div className="hero-content">
-        <div className="card w-96 bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Setup Interview</h2>
+  if (!authUser) {
+    return <div className="text-center py-10">Loading user...</div>;
+  }
 
-            <label className="form-control">
-              <span className="label-text">Topic</span>
+  return (
+    <div className="container mx-auto p-6 max-w-2xl">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h1 className="text-3xl font-bold text-center mb-8">Create New Interview</h1>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-lg font-medium">Interview Topic</span>
+              </label>
               <input
                 type="text"
-                value={topic}
-                onChange={handleTopicChange}
-                className="input input-bordered"
-                placeholder="React"
+                name="topic"
+                value={formData.topic}
+                onChange={handleChange}
+                placeholder="e.g., JavaScript, React, Node.js, Data Structures"
+                className="input input-bordered input-lg"
+                required
               />
-            </label>
+              <label className="label">
+                <span className="label-text-alt">Choose a specific technology or subject area</span>
+              </label>
+            </div>
 
-            <label className="form-control">
-              <span className="label-text">Level</span>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-lg font-medium">Difficulty Level</span>
+              </label>
               <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="select select-bordered"
+                name="level"
+                value={formData.level}
+                onChange={handleChange}
+                className="select select-bordered select-lg"
               >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                <option value="beginner">🟢 Beginner - Basic concepts and fundamentals</option>
+                <option value="intermediate">🟡 Intermediate - Practical applications</option>
+                <option value="advanced">🔴 Advanced - Complex scenarios and optimization</option>
               </select>
-            </label>
+            </div>
 
-            <label className="form-control">
-              <span className="label-text">Duration (min)</span>
-              <input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(+e.target.value)}
-                className="input input-bordered"
-                min="1"
-                max="60"
-              />
-            </label>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-lg font-medium">Duration</span>
+              </label>
+              <div className="flex items-center space-x-4">
+                <input
+                  type="range"
+                  name="duration"
+                  min="15"
+                  max="120"
+                  value={formData.duration}
+                  onChange={handleChange}
+                  className="range range-primary flex-1"
+                  step="5"
+                />
+                <div className="badge badge-lg badge-primary">{formData.duration} min</div>
+              </div>
+              <div className="flex justify-between text-xs px-2 mt-1">
+                <span>15 min</span>
+                <span>30 min</span>
+                <span>60 min</span>
+                <span>90 min</span>
+                <span>120 min</span>
+              </div>
+            </div>
 
-            <div className="card-actions justify-end">
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="font-bold">📋 Interview Preview</h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <strong>Topic:</strong> {formData.topic || "Not specified"}
+                  </p>
+                  <p>
+                    <strong>Level:</strong>{" "}
+                    <span className="capitalize">{formData.level}</span>
+                  </p>
+                  <p>
+                    <strong>Duration:</strong> {formData.duration} minutes
+                  </p>
+                  <p>
+                    <strong>Format:</strong> Voice-based Q&A with AI feedback
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-control mt-8">
               <button
-                onClick={handleCreate}
-                disabled={createMutation.isPending || !topic.trim()}
-                className="btn btn-primary"
+                type="submit"
+                className="btn btn-primary btn-lg"
+                disabled={createMutation.isPending || !formData.topic.trim()}
               >
                 {createMutation.isPending ? (
                   <>
-                    <span className="loading loading-spinner"></span>
-                    Creating…
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Creating Interview...
                   </>
                 ) : (
-                  <>
-                    <PlayCircle size={16} className="mr-1" />
-                    Start Interview
-                  </>
+                  <>🚀 Start Interview</>
                 )}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   );
-}  
+};
+
+export default InterviewSetupPage;

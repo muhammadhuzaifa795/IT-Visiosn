@@ -1,20 +1,31 @@
-// src/routes/interview.routes.js
-import express from "express";
+import express from "express"
 import {
   createInterview,
   getInterview,
   startInterview,
   endInterview,
-  nextQuestion
-} from "../controllers/interview.controller.js";
-import {protectRoute} from "../middleware/auth.middleware.js";
+  submitAnswer,
+} from "../controllers/interview.controller.js"
+import { protectRoute } from "../middleware/auth.middleware.js"
 
-const router = express.Router();
+const router = express.Router()
 
-router.post("/", protectRoute, createInterview);           // POST /interview
-router.get("/user/:userId", protectRoute, getInterview);   // GET /interview/user/:userId
-router.patch("/:id/start", protectRoute, startInterview);  // PATCH /interview/:id/start
-router.patch("/:id/end", protectRoute, endInterview);      // PATCH /interview/:id/end
-router.post("/next-question", protectRoute, nextQuestion); // POST /interview/next-question
+// All routes require authentication
+router.use(protectRoute)
 
-export default router;
+// Create new interview
+router.post("/", createInterview)
+
+// Get interviews by user
+router.get("/user/:userId", getInterview)
+
+// Start interview
+router.patch("/:id/start", startInterview)
+
+// End interview
+router.patch("/:id/end", endInterview)
+
+// Submit answer
+router.post("/answer", submitAnswer)
+
+export default router
