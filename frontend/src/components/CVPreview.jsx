@@ -14,7 +14,7 @@ const CVStyleGenerator = ({ onStyleChange, currentStyle }) => {
     secondaryColor: currentStyle.secondaryColor || "#64748b",
     headerStyle: currentStyle.headerStyle || "center",
     theme: currentStyle.theme || "minimal",
-    backgroundColor: currentStyle.backgroundColor || "#ffffff",
+    backgroundColor: currentStyle.backgroundColor || "#000000",
     layoutStyle: currentStyle.layoutStyle || "default",
   });
 

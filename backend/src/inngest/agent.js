@@ -10,14 +10,11 @@ export const geminiAdaptor = {
       const prompt = messages.map((m) => m.content).join("\n")
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
       const result = await model.generateContent(prompt)
-
-      // Clean the response to handle special characters
       const cleanedResponse = result.response
         .text()
-        .replace(/[^\w\s\-?.,:\n/()]/g, "") // Remove problematic special chars
-        .replace(/\s+/g, " ") // Normalize whitespace
+        .replace(/[^\w\s\-?.,:\n/()]/g, "")
+        .replace(/\s+/g, " ")
         .trim()
-
       return cleanedResponse
     } catch (error) {
       console.error("Gemini API error:", error.message)
@@ -40,23 +37,17 @@ export async function generateQuestion(level, topic, previousQuestions = []) {
     if (!level || !topic || typeof level !== "string" || typeof topic !== "string") {
       throw new Error("Invalid level or topic")
     }
-
     let prompt = `Generate ONE short ${level} level interview question about ${topic}. 
     Keep it under 15 words and make it direct and clear.
     Return ONLY the question, no additional text.`
-
-    // Add context about previous questions to avoid repetition
     if (previousQuestions.length > 0) {
       prompt += `\n\nAvoid these topics already covered:\n${previousQuestions.join("\n")}`
     }
-
     const messages = [{ role: "user", content: prompt }]
     const response = await geminiAdaptor.handler({ messages })
-
-    // Clean and shorten the question
     return response
-      .replace(/^(Question:|Q:)\s*/i, "") // Remove question prefixes
-      .replace(/\?+$/, "?") // Normalize question marks
+      .replace(/^(Question:|Q:)\s*/i, "")
+      .replace(/\?+$/, "?")
       .trim()
   } catch (error) {
     console.error("Error generating question:", error.message)
@@ -69,24 +60,19 @@ export async function evaluateAnswer(question, answer) {
     if (!question || !answer || typeof question !== "string" || typeof answer !== "string") {
       throw new Error("Invalid question or answer")
     }
-
     const prompt = `Question: ${question}
 Answer: ${answer}
-
 Evaluate this interview answer and provide:
 1. A score from 1-10 (where 10 is excellent)
 2. Brief constructive feedback (2-3 sentences max)
 3. Key strengths (1-2 points)
 4. Areas for improvement (1-2 points)
-
 Format your response as:
 Score: X/10
 Feedback: [brief feedback]
 Strengths: [key strengths]
 Improvements: [areas to improve]
-
 Keep all sections concise and professional.`
-
     const messages = [{ role: "user", content: prompt }]
     return await geminiAdaptor.handler({ messages })
   } catch (error) {
@@ -100,10 +86,8 @@ export async function generateRoadmap(topic, level) {
     if (!topic || !level) {
       throw new Error("Topic and level are required")
     }
-
     const prompt = `Create a comprehensive 12-week learning roadmap for ${topic} at ${level} level.
 Each week should have 3-4 specific topics to learn.
-
 Return ONLY a valid JSON object with this exact structure:
 {
   "level": "${level}",
@@ -114,14 +98,10 @@ Return ONLY a valid JSON object with this exact structure:
     ...continue for all 12 weeks
   ]
 }
-
 Do not include any markdown formatting, code blocks, or additional text.`
-
     const messages = [{ role: "user", content: prompt }]
     const response = await geminiAdaptor.handler({ messages })
-
     try {
-      // Clean the response to ensure it's valid JSON
       const cleanedResponse = response.trim().replace(/```json|```/g, "")
       return JSON.parse(cleanedResponse)
     } catch (parseError) {
@@ -140,24 +120,67 @@ export async function generateFollowUpQuestion(topic, level, previousQA) {
     const prompt = `Based on this previous Q&A in a ${level} level ${topic} interview:
 Question: ${previousQA.question}
 Answer: ${previousQA.answer}
-
 Generate a short follow-up question (under 15 words) that:
 1. Builds upon the previous answer
 2. Tests deeper understanding
 3. Is appropriate for ${level} level
 4. Focuses on ${topic}
-
 Return ONLY the question, no additional text.`
-
     const messages = [{ role: "user", content: prompt }]
     const response = await geminiAdaptor.handler({ messages })
-
     return response
-      .replace(/^(Question:|Q:)\s*/i, "") // Remove question prefixes
-      .replace(/\?+$/, "?") // Normalize question marks
+      .replace(/^(Question:|Q:)\s*/i, "")
+      .replace(/\?+$/, "?")
       .trim()
   } catch (error) {
     console.error("Error generating follow-up question:", error.message)
     throw new Error(`Failed to generate follow-up question: ${error.message}`)
   }
 }
+
+function normalizeQuestion(q) {
+  return q
+    .toLowerCase()
+    .replace(/[^\w\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .sort()
+    .join(" ")
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export async function generate100UniqueQuestions(topic, level) {
+  const seen = new Set()
+  const questions = []
+  let attempts = 0
+  const maxAttempts = 300
+  const delayBetweenRequestsMs = 4500
+
+  while (questions.length < 100 && attempts < maxAttempts) {
+    try {
+      const question = await generateQuestion(level, topic, questions)
+      const normalized = normalizeQuestion(question)
+      if (!seen.has(normalized)) {
+        seen.add(normalized)
+        questions.push(question)
+        console.log(`Generated (${questions.length}): ${question}`)
+      } else {
+        console.log(`Duplicate: ${question}`)
+      }
+    } catch (error) {
+      console.error(`Error generating question:`, error.message)
+    }
+    attempts++
+    await sleep(delayBetweenRequestsMs)
+  }
+
+  if (questions.length < 100) {
+    console.warn(`⚠️ Only generated ${questions.length} unique questions.`)
+  }
+
+  return questions
+}
+

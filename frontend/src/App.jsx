@@ -30,6 +30,7 @@ import InterviewSetupPage from "./pages/InterviewSetupPage.jsx"
 import LiveInterview from "./pages/LiveInterview.jsx"
 import InterviewResultPage from "./pages/InterviewResultPage.jsx"
 import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx"
+import Jarvis from "./components/Jarvis.jsx"
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser()
@@ -280,6 +281,7 @@ const App = () => {
         />
       </Routes>
       <Toaster />
+      <Jarvis/>
     </div>
   )
 }
