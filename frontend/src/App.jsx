@@ -24,6 +24,7 @@ import PasswordResetPage from "./pages/PasswordResetPage.jsx"
 import AddFacePage from "./pages/AddFacePage.jsx"
 import RoadmapPage from "./pages/RoadeMapPage.jsx"
 import LandingPage from "./pages/LandingPage.jsx"
+import ChatbotPage from "./pages/ChatbotPage.jsx"
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx"
@@ -74,7 +75,7 @@ const App = () => {
 
         <Route
           path="/landing"
-          element={!isAuthenticated ? <LandingPage /> : <Navigate to={ "/" } />}
+          element={!isAuthenticated ? <LandingPage /> : <Navigate to={"/"} />}
         />
         <Route path="/add-face" element={<AddFacePage />} />
         <Route path="/password-reset" element={<PasswordResetPage />} />
@@ -192,7 +193,30 @@ const App = () => {
             )
           }
         />
-
+        <Route
+          path="/chatbot"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ChatbotPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/chatbot/:chatId"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ChatbotPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
         {/* Interview Routes */}
         <Route
           path="/interviews"
@@ -281,7 +305,7 @@ const App = () => {
         />
       </Routes>
       <Toaster />
-      <Jarvis/>
+      <Jarvis />
     </div>
   )
 }

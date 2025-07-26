@@ -238,3 +238,17 @@ export const deleteUserResults =  async (resultId) => {
 }
 
 
+export const createChatbotMessage = async ({ userId, message }) => {
+  const response = await axiosInstance.post('/chatbot/chatbot-message', { userId, message });
+  return response.data;
+};
+
+export const getChatById = async (chatId) => {
+  const response = await axiosInstance.get(`/chatbot/chats/${chatId}`);
+  return response.data;
+};
+
+export const getUserChats = async (userId) => {
+  const response = await axiosInstance.get(`/chatbot/users/${userId}/chats`);
+  return response.data;
+};

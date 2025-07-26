@@ -24,6 +24,7 @@ import faceAuthRoutes from "./routes/face-auth.route.js";
 import roadMapRoutes from "./routes/road-map.route.js";
 import interviewRoutes from "./routes/interview.route.js";
 import resultRoutes from "./routes/result.routes.js";
+import  chatboatRoutes from "./routes/chatboat.route.js";
 import { setSocketIOInstance } from "./controllers/post.controller.js";
 import { connectDB } from "./lib/db.js";
 
@@ -143,6 +144,7 @@ app.use("/api/face-auth", faceAuthRoutes);
 app.use("/api/roadmap", roadMapRoutes);
 app.use("/api/interview", interviewRoutes);
 app.use("/api/results", resultRoutes);
+app.use("/api/chatbot", chatboatRoutes);
 app.use(
   "/api/inngest",
   serve({

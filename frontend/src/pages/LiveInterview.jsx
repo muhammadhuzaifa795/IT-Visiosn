@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
-import useVoiceRecording  from "../hooks/useVoiceRecording"
-import useTextToSpeech  from "../hooks/useTextToSpeech"
+import useVoiceRecording from "../hooks/useVoiceRecording"
+import useTextToSpeech from "../hooks/useTextToSpeech"
 import useInterviewSession from "../hooks/useInterviewSession"
 
 const LiveInterview = () => {
@@ -12,8 +12,9 @@ const LiveInterview = () => {
   const [isInterviewStarted, setIsInterviewStarted] = useState(false)
   const [hasSpokenCurrentQuestion, setHasSpokenCurrentQuestion] = useState(false)
   const [isUserAnswering, setIsUserAnswering] = useState(false)
+  const [inputMode, setInputMode] = useState("voice") // New state for input mode
+  const [textInput, setTextInput] = useState("") // New state for text input
 
-  // Use the interview session hook
   const {
     currentQuestion,
     transcript,
@@ -23,7 +24,7 @@ const LiveInterview = () => {
     timeRemaining,
     interviewDuration,
     start,
-    submitAnswer: submitUserAnswer,
+    submitAnswer,
     end,
   } = useInterviewSession(id)
 
@@ -37,7 +38,6 @@ const LiveInterview = () => {
 
   const { isSpeaking, speak, stopSpeaking } = useTextToSpeech()
 
-  // Speak questions when they arrive (only once and not while user is answering)
   useEffect(() => {
     if (currentQuestion && isInterviewStarted && !hasSpokenCurrentQuestion && !isUserAnswering) {
       speak(currentQuestion)
@@ -45,15 +45,14 @@ const LiveInterview = () => {
     }
   }, [currentQuestion, isInterviewStarted, hasSpokenCurrentQuestion, isUserAnswering, speak])
 
-  // Reset spoken flag when new question arrives
   useEffect(() => {
     if (currentQuestion) {
       setHasSpokenCurrentQuestion(false)
       setIsUserAnswering(false)
+      setTextInput("") // Reset text input for new question
     }
   }, [currentQuestion])
 
-  // Auto-end interview when time is up
   useEffect(() => {
     if (timeRemaining !== null && timeRemaining <= 0) {
       navigate(`/result/${id}`)
@@ -78,7 +77,6 @@ const LiveInterview = () => {
 
   const handleEndInterview = async () => {
     try {
-      // Stop any ongoing speech
       stopSpeaking()
       await end()
       navigate(`/result/${id}`)
@@ -88,17 +86,15 @@ const LiveInterview = () => {
   }
 
   const handleSubmitAnswer = async () => {
-    if (!voiceTranscript.trim()) return
+    const answer = inputMode === "voice" ? voiceTranscript : textInput
+    if (!answer.trim()) return
 
     try {
-      // Stop any ongoing speech before submitting
       stopSpeaking()
       setIsUserAnswering(false)
-
-      await submitUserAnswer(voiceTranscript)
-      resetRecording()
-
-      // Reset flags for next question
+      await submitAnswer(answer)
+      if (inputMode === "voice") resetRecording()
+      else setTextInput("")
       setHasSpokenCurrentQuestion(false)
     } catch (error) {
       console.error("Error submitting answer:", error)
@@ -107,11 +103,9 @@ const LiveInterview = () => {
 
   const handleVoiceToggle = () => {
     if (isRecording) {
-      // User stopped recording - they're done answering
       stopRecording()
       setIsUserAnswering(false)
     } else {
-      // User started recording - stop any speech and mark as answering
       if (isSpeaking) {
         stopSpeaking()
       }
@@ -122,12 +116,19 @@ const LiveInterview = () => {
 
   const handleStopSpeaking = () => {
     stopSpeaking()
-    setIsUserAnswering(true) // User wants to answer now
+    setIsUserAnswering(true)
+  }
+
+  const handleInputModeToggle = () => {
+    setInputMode(inputMode === "voice" ? "text" : "voice")
+    if (isRecording) stopRecording()
+    setIsUserAnswering(false)
+    setTextInput("")
+    resetRecording()
   }
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">🎤 Live Interview</h1>
@@ -145,14 +146,22 @@ const LiveInterview = () => {
             {isInterviewStarted && <div className="badge badge-info">📊 Duration: {interviewDuration} min</div>}
           </div>
         </div>
-        {isInterviewStarted && (
-          <button className="btn btn-error" onClick={handleEndInterview}>
-            🛑 End Interview
+        <div className="flex gap-2">
+          <button
+            className="btn btn-outline"
+            onClick={handleInputModeToggle}
+            disabled={isStarting || isSubmitting}
+          >
+            {inputMode === "voice" ? "✍️ Switch to Text" : "🎤 Switch to Voice"}
           </button>
-        )}
+          {isInterviewStarted && (
+            <button className="btn btn-error" onClick={handleEndInterview}>
+              🛑 End Interview
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Time Warning */}
       {timeRemaining !== null && timeRemaining <= 5 && timeRemaining > 0 && (
         <div className="alert alert-warning mb-4">
           <span>⚠️ Only {Math.ceil(timeRemaining)} minutes remaining!</span>
@@ -160,7 +169,6 @@ const LiveInterview = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Panel - Interview Controls */}
         <div className="space-y-6">
           {!isInterviewStarted ? (
             <div className="card bg-base-100 shadow-xl">
@@ -169,7 +177,9 @@ const LiveInterview = () => {
                 <h2 className="text-2xl font-bold mb-4">Ready to Begin?</h2>
                 <p className="text-base-content/70 mb-4">Duration: {interviewDuration} minutes</p>
                 <p className="text-base-content/70 mb-6">
-                  Make sure your microphone is working and you're in a quiet environment.
+                  {inputMode === "voice"
+                    ? "Make sure your microphone is working and you're in a quiet environment."
+                    : "Prepare to type your responses to the interview questions."}
                 </p>
                 <button
                   className="btn btn-primary btn-lg"
@@ -189,7 +199,6 @@ const LiveInterview = () => {
             </div>
           ) : (
             <>
-              {/* Current Question */}
               {currentQuestion && (
                 <div className="card bg-primary text-primary-content shadow-xl">
                   <div className="card-body">
@@ -221,59 +230,94 @@ const LiveInterview = () => {
                 </div>
               )}
 
-              {/* Voice Controls */}
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                   <h3 className="card-title">🎙️ Your Response</h3>
 
-                  <div className="flex items-center justify-center mb-6">
-                    <button
-                      className={`btn btn-circle btn-lg ${isRecording ? "btn-error animate-pulse" : "btn-primary"}`}
-                      onClick={handleVoiceToggle}
-                      disabled={!currentQuestion}
-                    >
-                      {isRecording ? "⏹️" : "🎤"}
-                    </button>
-                  </div>
-
-                  <div className="text-center mb-4">
-                    {isSpeaking ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="loading loading-dots loading-sm"></span>
-                        <span className="text-info font-medium">AI is speaking... Click "Stop Speaking" to answer</span>
-                      </div>
-                    ) : isRecording ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="loading loading-dots loading-sm"></span>
-                        <span className="text-error font-medium">Recording your answer...</span>
-                      </div>
-                    ) : (
-                      <span className="text-base-content/70">
-                        {currentQuestion ? "Click microphone to record your answer" : "Waiting for question..."}
-                      </span>
-                    )}
-                  </div>
-
-                  {voiceTranscript && (
-                    <div className="space-y-4">
-                      <div className="textarea textarea-bordered min-h-24 p-4 bg-base-200">{voiceTranscript}</div>
-                      <div className="flex gap-2 justify-end">
-                        <button className="btn btn-outline" onClick={resetRecording}>
-                          🗑️ Clear
-                        </button>
+                  {inputMode === "voice" ? (
+                    <>
+                      <div className="flex items-center justify-center mb-6">
                         <button
-                          className="btn btn-success"
-                          onClick={handleSubmitAnswer}
-                          disabled={isSubmitting || !voiceTranscript.trim()}
+                          className={`btn btn-circle btn-lg ${isRecording ? "btn-error animate-pulse" : "btn-primary"}`}
+                          onClick={handleVoiceToggle}
+                          disabled={!currentQuestion}
                         >
-                          {isSubmitting ? (
-                            <span className="loading loading-spinner loading-sm"></span>
-                          ) : (
-                            "📤 Submit Answer"
-                          )}
+                          {isRecording ? "⏹️" : "🎤"}
                         </button>
                       </div>
-                    </div>
+
+                      <div className="text-center mb-4">
+                        {isSpeaking ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="loading loading-dots loading-sm"></span>
+                            <span className="text-info font-medium">AI is speaking... Click "Stop Speaking" to answer</span>
+                          </div>
+                        ) : isRecording ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="loading loading-dots loading-sm"></span>
+                            <span className="text-error font-medium">Recording your answer...</span>
+                          </div>
+                        ) : (
+                          <span className="text-base-content/70">
+                            {currentQuestion ? "Click microphone to record your answer" : "Waiting for question..."}
+                          </span>
+                        )}
+                      </div>
+
+                      {voiceTranscript && (
+                        <div className="space-y-4">
+                          <div className="textarea textarea-bordered min-h-24 p-4 bg-base-200">{voiceTranscript}</div>
+                          <div className="flex gap-2 justify-end">
+                            <button className="btn btn-outline" onClick={resetRecording}>
+                              🗑️ Clear
+                            </button>
+                            <button
+                              className="btn btn-success"
+                              onClick={handleSubmitAnswer}
+                              disabled={isSubmitting || !voiceTranscript.trim()}
+                            >
+                              {isSubmitting ? (
+                                <span className="loading loading-spinner loading-sm"></span>
+                              ) : (
+                                "📤 Submit Answer"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-4">
+                        <textarea
+                          className="textarea textarea-bordered min-h-24 p-4 w-full bg-base-200"
+                          placeholder="Type your answer here..."
+                          value={textInput}
+                          onChange={(e) => setTextInput(e.target.value)}
+                          disabled={!currentQuestion}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            className="btn btn-outline"
+                            onClick={() => setTextInput("")}
+                            disabled={!textInput.trim()}
+                          >
+                            🗑️ Clear
+                          </button>
+                          <button
+                            className="btn btn-success"
+                            onClick={handleSubmitAnswer}
+                            disabled={isSubmitting || !textInput.trim()}
+                          >
+                            {isSubmitting ? (
+                              <span className="loading loading-spinner loading-sm"></span>
+                            ) : (
+                              "📤 Submit Answer"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -281,11 +325,9 @@ const LiveInterview = () => {
           )}
         </div>
 
-        {/* Right Panel - Transcript */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h3 className="card-title">💬 Interview Transcript</h3>
-
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {transcript.length === 0 ? (
                 <div className="text-center py-8 text-base-content/50">
