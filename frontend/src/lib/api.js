@@ -239,16 +239,31 @@ export const deleteUserResults =  async (resultId) => {
 
 
 export const createChatbotMessage = async ({ userId, message }) => {
+  if (!userId) throw new Error('User ID is required');
   const response = await axiosInstance.post('/chatbot/chatbot-message', { userId, message });
   return response.data;
 };
 
 export const getChatById = async (chatId) => {
+  if (!chatId) throw new Error('Chat ID is required');
   const response = await axiosInstance.get(`/chatbot/chats/${chatId}`);
   return response.data;
 };
 
 export const getUserChats = async (userId) => {
+  if (!userId) throw new Error('User ID is required');
   const response = await axiosInstance.get(`/chatbot/users/${userId}/chats`);
+  return response.data;
+};
+
+export const updateChatTitle = async (chatId, title) => {
+  if (!chatId) throw new Error('Chat ID is required');
+  const response = await axiosInstance.patch(`/chatbot/chats/${chatId}/title`, { title });
+  return response.data;
+};
+
+export const deleteChat = async (chatId) => {
+  if (!chatId) throw new Error('Chat ID is required');
+  const response = await axiosInstance.delete(`/chatbot/chats/${chatId}`);
   return response.data;
 };
