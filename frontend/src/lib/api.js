@@ -1,4 +1,3 @@
-import { Await } from "react-router";
 import { axiosInstance } from "./axios";
 
 export const signup = async (signupData) => {
@@ -10,12 +9,11 @@ export const login = async (loginData) => {
   const response = await axiosInstance.post("/auth/login", loginData);
   return response.data;
 };
+
 export const logout = async () => {
   const response = await axiosInstance.post("/auth/logout");
   return response.data;
 };
-
-
 
 export const getAuthUser = async () => {
   try {
@@ -36,7 +34,6 @@ export const updateUserProfile = async (profileData) => {
   const response = await axiosInstance.put("/auth/update-profile", profileData);
   return response.data;
 };
-
 
 export const addFace = (formData) =>
   axiosInstance.post('/face-auth/add-face', formData, {
@@ -118,6 +115,7 @@ export async function createPost(postData) {
   });
   return response.data
 }
+
 export async function updatePost(postId, formData) {
   const response = await axiosInstance.put(`/post/update-post/${postId}`, formData, {
     headers: {
@@ -132,24 +130,18 @@ export async function deletePost(postId) {
   return response.data;
 }
 
-
-
-
 export async function togglePostLike(postId) {
   return await axiosInstance.post(`/post/${postId}/like`).then(res => res.data);
 }
 
-
 export async function aiPrompt(prompt) {
-  const  response = await axiosInstance.post('/ai/get-response/',{prompt});
+  const response = await axiosInstance.post('/ai/get-response/', {prompt});
   return response.data;
 }
 
-
-
 export const generateCV = async (cvData) => {
   const res = await axiosInstance.post("/cv/generate", cvData);
-  return res.data.cv; // Return the CV object only
+  return res.data.cv;
 };
 
 export const getCV = async (userId) => {
@@ -157,19 +149,16 @@ export const getCV = async (userId) => {
   return res.data;
 };
 
-
 export const updateCV = async ({ _id, updatedData }) => {
   const response = await axiosInstance.put(`/cv/update/${_id}`, updatedData);
   return response.data;
 };
 
-
-
-export const deleteCV = async (cvId) => {
+// **** Yahan change kiya hai: cvId ko destructure kiya hai ****
+export const deleteCV = async ({ cvId }) => { // cvId ab object se nikala jayega
   const res = await axiosInstance.delete(`/cv/delete/${cvId}`);
   return res.data;
 };
-
 
 export async function addComment({postId, commentData}) {
   const response = await axiosInstance.post(`/comment/add-comments/${postId}`, commentData)
@@ -181,7 +170,7 @@ export async function getCommentsByPost(postId) {
   return response.data;
 }
 
-export const toggleCommentLike = async ({postId, commentid }) => {
+export async function toggleCommentLike({postId, commentid }) {
   const response = await axiosInstance.put(`/comment/like-comment/${postId}/${commentid}`);
   return response.data;
 };
@@ -196,11 +185,16 @@ export const getRoadmap = async (userId) => {
   return response.data;
 };
 
+export const deleteRoadmap = async (roadmapId) => {
+  const response = await axiosInstance.delete(`/roadmap/delete-roadmap/${roadmapId}`);
+  return response.data;
+};
 
-export const  createInterview = async (interviewData) => {
+export const createInterview = async (interviewData) => {
   const response = await axiosInstance.post("/interview", interviewData);
   return response.data;
 };
+
 export const getInterviews = async (userId) => {
   const response = await axiosInstance.get(`/interview/user/${userId}`)
   return response.data
@@ -232,11 +226,10 @@ export const getUserResults = async (userId) => {
   return response.data
 }
 
-export const deleteUserResults =  async (resultId) => {
+export const deleteUserResults = async (resultId) => {
   const response = await axiosInstance.delete(`/results/delete/${resultId}`)
   return response.data
 }
-
 
 export const createChatbotMessage = async ({ userId, message }) => {
   if (!userId) throw new Error('User ID is required');

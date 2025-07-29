@@ -1,45 +1,45 @@
-import { Navigate, Route, Routes } from "react-router"
-import HomePage from "./pages/HomePage.jsx"
-import SignUpPage from "./pages/SignUpPage.jsx"
-import LoginPage from "./pages/LoginPage.jsx"
-import NotificationsPage from "./pages/NotificationsPage.jsx"
-import CallPage from "./pages/CallPage.jsx"
-import ChatPage from "./pages/ChatPage.jsx"
-import OnboardingPage from "./pages/OnboardingPage.jsx"
-import UserPage from "./pages/UserPage.jsx"
-import ProfilePage from "./pages/ProfilePage.jsx"
-import UploadPost from "./pages/UploadPost.jsx"
-import PostDetail from "./pages/PostDetail.jsx"
-import AIPromptPage from "./pages/AIPromptPage.jsx"
-import CVList from "./pages/CVList.jsx"
-import CVForm from "./pages/CVForm.jsx"
-import CVPreview from "./components/CVPreview.jsx"
-import Friends from "./pages/Friends.jsx"
-import { Toaster } from "react-hot-toast"
-import PageLoader from "./components/PageLoader.jsx"
-import useAuthUser from "./hooks/useAuthUser.js"
-import Layout from "./components/Layout.jsx"
-import { useThemeStore } from "./store/useThemeStore.js"
-import PasswordResetPage from "./pages/PasswordResetPage.jsx"
-import AddFacePage from "./pages/AddFacePage.jsx"
-import RoadmapPage from "./pages/RoadeMapPage.jsx"
-import LandingPage from "./pages/LandingPage.jsx"
-import ChatbotPage from "./pages/ChatbotPage.jsx"
+import { Navigate, Route, Routes } from "react-router";
+import HomePage from "./pages/HomePage.jsx";
+import SignUpPage from "./pages/SignUpPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import NotificationsPage from "./pages/NotificationsPage.jsx";
+import CallPage from "./pages/CallPage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
+import OnboardingPage from "./pages/OnboardingPage.jsx";
+import UserPage from "./pages/UserPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
+import UploadPost from "./pages/UploadPost.jsx";
+import PostDetail from "./pages/PostDetail.jsx";
+import AIPromptPage from "./pages/AIPromptPage.jsx";
+import CVList from "./pages/CVList.jsx";
+import CVForm from "./pages/CVForm.jsx";
+import CVPreview from "./components/CVPreview.jsx";
+import Friends from "./pages/Friends.jsx";
+import { Toaster } from "react-hot-toast";
+import PageLoader from "./components/PageLoader.jsx";
+import useAuthUser from "./hooks/useAuthUser.js";
+import Layout from "./components/Layout.jsx";
+import { useThemeStore } from "./store/useThemeStore.js";
+import PasswordResetPage from "./pages/PasswordResetPage.jsx";
+import AddFacePage from "./pages/AddFacePage.jsx";
+import RoadmapPage from "./pages/RoadeMapPage.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
+import ChatbotPage from "./pages/ChatbotPage.jsx";
 
 // New Interview Pages
-import InterviewSetupPage from "./pages/InterviewSetupPage.jsx"
-import LiveInterview from "./pages/LiveInterview.jsx"
-import InterviewResultPage from "./pages/InterviewResultPage.jsx"
-import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx"
-import Jarvis from "./components/Jarvis.jsx"
+import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
+import LiveInterview from "./pages/LiveInterview.jsx";
+import InterviewResultPage from "./pages/InterviewResultPage.jsx";
+import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx";
+import Jarvis from "./components/Jarvis.jsx";
 
 const App = () => {
-  const { isLoading, authUser } = useAuthUser()
-  const { theme } = useThemeStore()
-  const isAuthenticated = Boolean(authUser)
-  const isOnboarded = authUser?.isOnboarded
+  const { isLoading, authUser } = useAuthUser();
+  const { theme } = useThemeStore();
+  const isAuthenticated = Boolean(authUser);
+  const isOnboarded = authUser?.isOnboarded;
 
-  if (isLoading) return <PageLoader />
+  if (isLoading) return <PageLoader />;
 
   return (
     <div className="min-h-screen" data-theme={theme}>
@@ -70,7 +70,13 @@ const App = () => {
         />
         <Route
           path="/signup"
-          element={!isAuthenticated ? <SignUpPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />}
+          element={
+            !isAuthenticated ? (
+              <SignUpPage />
+            ) : (
+              <Navigate to={isOnboarded ? "/" : "/onboarding"} />
+            )
+          }
         />
 
         <Route
@@ -81,7 +87,13 @@ const App = () => {
         <Route path="/password-reset" element={<PasswordResetPage />} />
         <Route
           path="/login"
-          element={!isAuthenticated ? <LoginPage /> : <Navigate to={isOnboarded ? "/" : "/onboarding"} />}
+          element={
+            !isAuthenticated ? (
+              <LoginPage />
+            ) : (
+              <Navigate to={isOnboarded ? "/" : "/onboarding"} />
+            )
+          }
         />
         <Route
           path="/notifications"
@@ -119,7 +131,17 @@ const App = () => {
         />
         <Route
           path="/onboarding"
-          element={isAuthenticated ? !isOnboarded ? <OnboardingPage /> : <Navigate to="/" /> : <Navigate to="/login" />}
+          element={
+            isAuthenticated ? (
+              !isOnboarded ? (
+                <OnboardingPage />
+              ) : (
+                <Navigate to="/" />
+              )
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
         <Route
           path="/profile"
@@ -307,7 +329,7 @@ const App = () => {
       <Toaster />
       <Jarvis />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
