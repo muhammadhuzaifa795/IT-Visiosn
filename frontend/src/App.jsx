@@ -25,6 +25,7 @@ import AddFacePage from "./pages/AddFacePage.jsx";
 import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
+import Help from "./pages/Help.jsx";
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
@@ -239,6 +240,23 @@ const App = () => {
             )
           }
         />
+
+
+         <Route
+          path="/help"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <Help />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+
+
         {/* Interview Routes */}
         <Route
           path="/interviews"
