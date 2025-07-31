@@ -331,32 +331,10 @@
 
 
 
-
 "use client"
-
 import { Link, useLocation } from "react-router"
 import useAuthUser from "../hooks/useAuthUser"
-import {
-  BellIcon,
-  HomeIcon,
-  PodcastIcon,
-  MessageCircleIcon,
-  ShipWheelIcon,
-  UsersIcon,
-  Code2Icon,
-  FileTextIcon,
-  MenuIcon,
-  ChevronLeftIcon,
-  XIcon,
-  KeyIcon,
-  LogOutIcon,
-  SettingsIcon,
-  HelpCircleIcon,
-  CopyIcon,
-  MapIcon,
-  UserRound,
-  SparklesIcon,
-} from "lucide-react"
+import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, TrophyIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
@@ -439,13 +417,15 @@ const Sidebar = () => {
     { to: "/ai-prompt", label: "AI Prompt", icon: Code2Icon, gradient: "from-orange-500/20 to-red-500/20" },
     { to: "/roadmap", label: "Road Map", icon: MapIcon, gradient: "from-indigo-500/20 to-purple-500/20" },
     { to: "/interviews", label: "Mock Interview", icon: UserRound, gradient: "from-teal-500/20 to-cyan-500/20" },
+    { to: "/leaderboard", label: "Leader Board", icon: TrophyIcon, gradient: "from-amber-500/20 to-yellow-500/20" }, // New leaderboard item
+    // { to: "/settings", label: "Settings", icon: TrophyIcon, gradient: "from-amber-500/20 to-yellow-500/20" }, // New Settings item
     { to: "/friends", label: "Friends", icon: UsersIcon, gradient: "from-pink-500/20 to-rose-500/20" },
     { to: "/users", label: "Users", icon: UsersIcon, gradient: "from-violet-500/20 to-purple-500/20" },
     { to: "/notifications", label: "Notifications", icon: BellIcon, gradient: "from-yellow-500/20 to-orange-500/20" },
     { to: "/password-reset", label: "Password Reset", icon: KeyIcon, gradient: "from-red-500/20 to-pink-500/20" },
     { to: "/add-face", label: "Add Face", icon: KeyIcon, gradient: "from-blue-500/20 to-indigo-500/20" },
     { to: "/chatbot", label: "Chatbot", icon: MessageCircleIcon, gradient: "from-green-500/20 to-teal-500/20" },
-    { to: "/settings", label: "Settings", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
+    { to: "/settingspage", label: "Settingspage", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
     { to: "/help", label: "Help", icon: HelpCircleIcon, gradient: "from-cyan-500/20 to-blue-500/20" },
     { to: "/logout", label: "Logout", icon: LogOutIcon, gradient: "from-red-500/20 to-orange-500/20" },
   ]
@@ -510,7 +490,6 @@ const Sidebar = () => {
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
             />
-
             {/* Mobile Sidebar */}
             <motion.aside
               ref={sidebarRef}
@@ -676,7 +655,6 @@ const Sidebar = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -710,7 +688,6 @@ const Sidebar = () => {
                     <div className="absolute inset-0 bg-primary/10 rounded-lg animate-pulse" />
                   )}
                 </div>
-
                 <AnimatePresence>
                   {isSidebarOpen && (
                     <motion.span
@@ -724,7 +701,6 @@ const Sidebar = () => {
                     </motion.span>
                   )}
                 </AnimatePresence>
-
                 {currentPath === item.to && isSidebarOpen && (
                   <motion.div
                     layoutId="desktop-active-pill"
@@ -733,7 +709,6 @@ const Sidebar = () => {
                   />
                 )}
               </Link>
-
               {/* Tooltip for collapsed state */}
               {!isSidebarOpen && (
                 <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-base-300/90 backdrop-blur-md text-base-content text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 whitespace-nowrap">
@@ -757,7 +732,6 @@ const Sidebar = () => {
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-base-100 animate-pulse" />
               </div>
-
               <AnimatePresence>
                 {isSidebarOpen && (
                   <motion.div
@@ -787,7 +761,6 @@ const Sidebar = () => {
                 )}
               </AnimatePresence>
             </div>
-
             {/* Tooltip for collapsed user section */}
             {!isSidebarOpen && (
               <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-2 bg-base-300/90 backdrop-blur-md text-base-content text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 whitespace-nowrap">
@@ -803,3 +776,4 @@ const Sidebar = () => {
 }
 
 export default Sidebar
+

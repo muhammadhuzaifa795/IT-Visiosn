@@ -26,6 +26,7 @@ import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
+// import Settings from "./pages/Settings.jsx";
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
@@ -33,6 +34,9 @@ import LiveInterview from "./pages/LiveInterview.jsx";
 import InterviewResultPage from "./pages/InterviewResultPage.jsx";
 import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx";
 import Jarvis from "./components/Jarvis.jsx";
+import Leaderboard from "./pages/Leaderboard.jsx";
+import { Settings } from "lucide-react";
+import Settingspage from "./pages/Settingspage.jsx";
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
@@ -254,6 +258,18 @@ const App = () => {
             )
           }
         />
+            <Route
+          path="/settingspage"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <Settingspage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
 
 
 
@@ -264,6 +280,18 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <InterviewDashboardPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+           <Route
+          path="/leaderboard"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <Leaderboard />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
