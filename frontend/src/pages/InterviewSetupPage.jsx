@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useCreateInterview } from "../hooks/useInterview";
 import useAuthUser from "../hooks/useAuthUser";
+import { ShipWheelIcon, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router';
+
+
 
 const InterviewSetupPage = () => {
   const navigate = useNavigate();
@@ -47,6 +51,18 @@ const InterviewSetupPage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
+
+       {/* Header */}
+            <div className="container mx-auto max-w-4xl pt-8 pb-0">
+              {/* <div className="flex items-center justify-between mb-8"> */}
+                <Link to="/interviews" className="btn btn-ghost gap-2">
+                  <ArrowLeft className="size-5" />
+                  Back to Home
+                </Link>
+                
+                
+              {/* </div> */}
+            </div>
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h1 className="text-3xl font-bold text-center mb-8">Create New Interview</h1>

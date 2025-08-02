@@ -401,25 +401,21 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { Dialog, Transition } from "@headlessui/react"
-import CVForm from "../pages/CVForm"
+import CVForm from "../pages/CVForm" // Assuming CVForm is in pages/CVForm.jsx
 import PageLoader from "../components/PageLoader"
 import { motion, AnimatePresence } from "framer-motion"
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from "@tanstack/react-query"
 
 const CVList = () => {
-  const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient()
   const { authUser, isLoading: isAuthLoading } = useAuthUser()
   const userId = authUser?.userId || authUser?._id
   const { cv, isLoading: isCVLoading } = useGetCV(userId)
-
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedCV, setSelectedCV] = useState(null);
-
-  const { mutate: generateCV } = useGenerateCV();
-  const { mutate: updateCV } = useUpdateCV();
-  const { deleteCVMutation: deleteCV } = useDeleteCV();
-
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [selectedCV, setSelectedCV] = useState(null)
+  const { mutate: generateCV } = useGenerateCV()
+  const { mutate: updateCV } = useUpdateCV()
+  const { deleteCVMutation: deleteCV } = useDeleteCV()
   const [isOpen, setIsOpen] = useState(false)
   const [editData, setEditData] = useState(null)
   const [sortOrder, setSortOrder] = useState("newest")
@@ -443,46 +439,41 @@ const CVList = () => {
 
   const handleDelete = (cvData) => {
     if (!cvData || !cvData._id) {
-      console.error("CV data or _id is missing for deletion.", cvData);
-      // Removed alert here
-      return;
+      console.error("CV data or _id is missing for deletion.", cvData)
+      return
     }
-    setSelectedCV(cvData);
-    setDeleteConfirmOpen(true);
-  };
+    setSelectedCV(cvData)
+    setDeleteConfirmOpen(true)
+  }
 
   const confirmDelete = () => {
     if (!selectedCV || !selectedCV._id) {
-      console.error("No CV selected for deletion.");
-      // Removed alert here
-      return;
+      console.error("No CV selected for deletion.")
+      return
     }
-
     deleteCV(
-      { cvId: selectedCV._id },
+      { cvId: selectedCV._id, userId: userId }, // Pass userId for cache invalidation
       {
         onSuccess: () => {
-          console.log("CV deleted successfully!");
-          queryClient.invalidateQueries({ queryKey: ['cv'] });
-          setDeleteConfirmOpen(false);
-          setSelectedCV(null);
+          console.log("CV deleted successfully!")
+          queryClient.invalidateQueries({ queryKey: ["cv", userId] }) // Invalidate specific user's CVs
+          setDeleteConfirmOpen(false)
+          setSelectedCV(null)
         },
         onError: (error) => {
-          console.error("Error deleting CV from CVList.jsx:", error);
-          // Removed alert here
-          setDeleteConfirmOpen(false);
-          setSelectedCV(null);
+          console.error("Error deleting CV from CVList.jsx:", error)
+          setDeleteConfirmOpen(false)
+          setSelectedCV(null)
         },
-      }
-    );
-  };
-
+      },
+    )
+  }
 
   if (isAuthLoading || isCVLoading) {
     return <PageLoader />
   }
 
-  const cvList = Array.isArray(cv) ? cv : cv ? [cv] : []
+  const cvList = Array.isArray(cv) ? cv.filter(Boolean) : cv ? [cv].filter(Boolean) : []
 
   const filteredCVs = cvList.filter(
     (item) =>
@@ -499,7 +490,7 @@ const CVList = () => {
   })
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -872,7 +863,6 @@ const CVList = () => {
           >
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
           </Transition.Child>
-
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <Transition.Child
@@ -892,7 +882,6 @@ const CVList = () => {
                   >
                     <X className="w-5 h-5" />
                   </button>
-
                   <CVForm initialData={editData} onClose={closeModal} onSuccess={closeModal} />
                 </Dialog.Panel>
               </Transition.Child>
@@ -915,7 +904,6 @@ const CVList = () => {
           >
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           </Transition.Child>
-
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <Transition.Child
@@ -928,9 +916,7 @@ const CVList = () => {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md rounded-2xl bg-base-100 p-6 shadow-2xl border border-base-300">
-                  <Dialog.Title className="text-lg font-semibold text-error mb-4">
-                    Delete CV Confirmation
-                  </Dialog.Title>
+                  <Dialog.Title className="text-lg font-semibold text-error mb-4">Delete CV Confirmation</Dialog.Title>
                   <p className="text-base-content mb-6">
                     Kya aap waqai is CV ko delete karna chahte hain:{" "}
                     <strong>{selectedCV?.name || "Untitled CV"}</strong>? Yeh action wapas nahi liya ja sakta.
@@ -939,16 +925,13 @@ const CVList = () => {
                     <button
                       className="btn btn-outline"
                       onClick={() => {
-                        setDeleteConfirmOpen(false);
-                        setSelectedCV(null);
+                        setDeleteConfirmOpen(false)
+                        setSelectedCV(null)
                       }}
                     >
                       Cancel
                     </button>
-                    <button
-                      className="btn btn-error"
-                      onClick={confirmDelete}
-                    >
+                    <button className="btn btn-error" onClick={confirmDelete}>
                       Delete
                     </button>
                   </div>
@@ -963,3 +946,5 @@ const CVList = () => {
 }
 
 export default CVList
+
+

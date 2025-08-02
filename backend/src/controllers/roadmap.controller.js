@@ -67,67 +67,78 @@
 
 
 
-
-import { inngest } from '../inngest/client.js';
-import Roadmap from '../models/RoadMap.js'; // Updated to capital 'M'
+import { inngest } from "../inngest/client.js"
+import Roadmap from "../models/RoadMap.js" // Updated to capital 'M'
 
 export const createRoadmap = async (req, res) => {
   try {
-    const { topic, level, userId } = req.body;
-    if (!topic || !level || !userId) {
-      return res.status(400).json({ message: 'Topic, level, and userId are required' });
+    // 'goal' ko req.body se extract kiya gaya hai
+    const { topic, level, userId, goal } = req.body
+
+    // Validation mein 'goal' ko shamil kiya gaya hai
+    if (!topic || !level || !userId || !goal) {
+      return res.status(400).json({ message: "Topic, level, userId, and goal are required" })
     }
 
     const roadmap = await Roadmap.create({
       user: userId,
       topic,
       level,
-      status: 'pending',
-    });
+      goal, // 'goal' ko database mein save kiya ja raha hai
+      status: "pending",
+    })
 
     await inngest.send({
-      name: 'roadmap/generate',
-      data: { roadmapId: roadmap._id, topic, level },
-    });
+      name: "roadmap/generate",
+      data: { roadmapId: roadmap._id, topic, level, goal }, // 'goal' ko Inngest event mein bheja ja raha hai
+    })
 
     res.status(201).json({
-      message: 'Roadmap created successfully',
+      message: "Roadmap created successfully",
       roadmap,
-    });
+    })
   } catch (error) {
-    console.error('Error creating roadmap:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error creating roadmap:", error)
+    res.status(500).json({ message: "Server error", error: error.message })
   }
-};
+}
 
 export const getRoadmap = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const roadmaps = await Roadmap.find({ user: userId });
-    res.status(200).json(roadmaps);
+    const { userId } = req.params
+    const roadmaps = await Roadmap.find({ user: userId })
+    res.status(200).json(roadmaps)
   } catch (error) {
-    console.error('Error fetching roadmaps:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching roadmaps:", error)
+    res.status(500).json({ message: "Server error", error: error.message })
   }
-};
+}
 
 export const deleteRoadmap = async (req, res) => {
   try {
-    const { roadmapId } = req.params;
-    const roadmap = await Roadmap.findById(roadmapId);
-
+    const { roadmapId } = req.params
+    const roadmap = await Roadmap.findById(roadmapId)
     if (!roadmap) {
-      return res.status(404).json({ message: 'Roadmap not found' });
+      return res.status(404).json({ message: "Roadmap not found" })
     }
-
     if (roadmap.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Unauthorized to delete this roadmap' });
+      return res.status(403).json({ message: "Unauthorized to delete this roadmap" })
     }
-
-    await roadmap.deleteOne();
-    res.status(200).json({ message: 'Roadmap deleted successfully' });
+    await roadmap.deleteOne()
+    res.status(200).json({ message: "Roadmap deleted successfully" })
   } catch (error) {
-    console.error('Error deleting roadmap:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error deleting roadmap:", error)
+    res.status(500).json({ message: "Server error", error: error.message })
   }
-};
+}
+
+
+
+
+
+
+
+
+
+
+

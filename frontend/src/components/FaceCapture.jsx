@@ -1,5 +1,12 @@
 import { useRef, useState, useEffect } from "react";
-import { Camera, X, Loader, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
+import {
+  Camera,
+  X,
+  Loader,
+  CheckCircle,
+  AlertCircle,
+  RotateCcw,
+} from "lucide-react";
 
 export default function FaceCapture({ onCapture }) {
   const videoRef = useRef(null);
@@ -13,22 +20,24 @@ export default function FaceCapture({ onCapture }) {
   const startCamera = async () => {
     try {
       setError(null);
-      const s = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 }, 
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 640 },
           height: { ideal: 480 },
-          facingMode: 'user' 
-        } 
+          facingMode: "user",
+        },
       });
       setStream(s);
       videoRef.current.srcObject = s;
     } catch (err) {
-      setError("Camera access denied. Please allow camera permissions.");
+      // setError("Camera access denied. Please allow camera permissions.");
+      setError("Camera access denied. Please check your browser settings and allow access.");
+
     }
   };
 
   const stopCamera = () => {
-    stream?.getTracks().forEach(t => t.stop());
+    stream?.getTracks().forEach((t) => t.stop());
     setStream(null);
     setCountdown(null);
     setIsCapturing(false);
@@ -39,7 +48,7 @@ export default function FaceCapture({ onCapture }) {
     setIsCapturing(true);
     let count = 3;
     setCountdown(count);
-    
+
     const timer = setInterval(() => {
       count--;
       if (count > 0) {
@@ -57,18 +66,22 @@ export default function FaceCapture({ onCapture }) {
     const video = videoRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
+
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0);
-    
-    canvas.toBlob((blob) => {
-      onCapture(blob);
-      setCaptured(true);
-      setTimeout(() => {
-        stopCamera();
-      }, 1500);
-    }, "image/jpeg", 0.8);
-    
+
+    canvas.toBlob(
+      (blob) => {
+        onCapture(blob);
+        setCaptured(true);
+        setTimeout(() => {
+          stopCamera();
+        }, 1500);
+      },
+      "image/jpeg",
+      0.8
+    );
+
     setCountdown(null);
     setIsCapturing(false);
   };
@@ -80,30 +93,78 @@ export default function FaceCapture({ onCapture }) {
 
   useEffect(() => {
     return () => {
-      stream?.getTracks().forEach(t => t.stop());
+      stream?.getTracks().forEach((t) => t.stop());
     };
   }, [stream]);
 
   if (error) {
     return (
+      // <div className="w-full max-w-md mx-auto">
+      //   <div className="bg-error/10 border border-error/20 rounded-xl p-6 text-center space-y-4">
+      //     <div className="w-12 h-12 bg-error/20 rounded-full flex items-center justify-center mx-auto">
+      //       <AlertCircle className="size-6 text-error" />
+      //     </div>
+      //     <div>
+      //       <h3 className="font-semibold text-error mb-1">Camera Error</h3>
+      //       <p className="text-sm text-base-content/70">{error}</p>
+      //     </div>
+      //     <button
+      //       onClick={() => {
+      //         setError(null);
+      //         startCamera();
+      //       }}
+      //       className="btn btn-error btn-sm"
+      //     >
+      //       <RotateCcw className="size-4" />
+      //       Try Again
+      //     </button>
+      //   </div>
+      // </div>
+
+
+
+
+
+      
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-error/10 border border-error/20 rounded-xl p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-error/20 rounded-full flex items-center justify-center mx-auto">
-            <AlertCircle className="size-6 text-error" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-error mb-1">Camera Error</h3>
-            <p className="text-sm text-base-content/70">{error}</p>
-          </div>
-          <button 
-            onClick={() => { setError(null); startCamera(); }}
-            className="btn btn-error btn-sm"
-          >
-            <RotateCcw className="size-4" />
-            Try Again
-          </button>
-        </div>
-      </div>
+  <div className="bg-error/10 border border-error/20 rounded-xl p-6 text-center space-y-5">
+    <div className="w-12 h-12 bg-error/20 rounded-full flex items-center justify-center mx-auto">
+      <AlertCircle className="size-6 text-error" />
+    </div>
+
+    <div>
+      <h3 className="font-semibold text-error text-lg mb-1">Camera Access Required</h3>
+      <p className="text-sm text-base-content/70">
+        Have you allowed camera access in your browser settings? <br />
+        Please allow access to continue face capture.
+      </p>
+    </div>
+
+    <div className="flex justify-center gap-3 mt-4">
+      <button
+        onClick={() => {
+          setError(null); 
+          startCamera();  
+        }}
+        className="btn btn-success btn-sm"
+      >
+        <RotateCcw className="size-4" />
+        Yes, I have allowed
+      </button>
+
+      <button
+        onClick={() => {
+          setError(null); 
+          stopCamera();  
+        }}
+        className="btn btn-ghost btn-sm"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
     );
   }
 
@@ -116,7 +177,9 @@ export default function FaceCapture({ onCapture }) {
           </div>
           <div>
             <h3 className="font-semibold text-success mb-1">Face Captured!</h3>
-            <p className="text-sm text-base-content/70">Verifying your identity...</p>
+            <p className="text-sm text-base-content/70">
+              Verifying your identity...
+            </p>
           </div>
           <div className="loading loading-dots loading-sm text-success"></div>
         </div>
@@ -126,22 +189,20 @@ export default function FaceCapture({ onCapture }) {
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
-      
       {/* Video Container */}
       <div className="relative rounded-2xl overflow-hidden bg-base-300 shadow-lg">
         {stream ? (
           <>
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              muted 
-              playsInline 
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
               className="w-full aspect-[4/3] object-cover"
             />
-            
+
             {/* Overlay Elements */}
             <div className="absolute inset-0 pointer-events-none">
-              
               {/* Face Detection Frame */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <div className="w-48 h-56 border-2 border-secondary rounded-2xl relative">
@@ -150,7 +211,7 @@ export default function FaceCapture({ onCapture }) {
                   <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-secondary rounded-tr-lg"></div>
                   <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-secondary rounded-bl-lg"></div>
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-secondary rounded-br-lg"></div>
-                  
+
                   {/* Center guidance text */}
                   <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-base-content/60 text-center whitespace-nowrap">
                     Position your face here
@@ -174,7 +235,6 @@ export default function FaceCapture({ onCapture }) {
                   <span className="text-white text-xs font-medium">Live</span>
                 </div>
               </div>
-
             </div>
           </>
         ) : (
@@ -195,8 +255,8 @@ export default function FaceCapture({ onCapture }) {
       {/* Controls */}
       <div className="flex justify-center gap-3">
         {!stream ? (
-          <button 
-            className="btn btn-secondary btn-wide shadow-lg hover:scale-105 transition-all duration-200" 
+          <button
+            className="btn btn-secondary btn-wide shadow-lg hover:scale-105 transition-all duration-200"
             onClick={startCamera}
           >
             <Camera className="size-5" />
@@ -204,8 +264,8 @@ export default function FaceCapture({ onCapture }) {
           </button>
         ) : (
           <>
-            <button 
-              className="btn btn-success shadow-lg hover:scale-105 transition-all duration-200 relative overflow-hidden" 
+            <button
+              className="btn btn-success shadow-lg hover:scale-105 transition-all duration-200 relative overflow-hidden"
               onClick={startCountdown}
               disabled={isCapturing}
             >
@@ -221,9 +281,9 @@ export default function FaceCapture({ onCapture }) {
                 </>
               )}
             </button>
-            
-            <button 
-              className="btn btn-ghost hover:scale-105 transition-all duration-200" 
+
+            <button
+              className="btn btn-ghost hover:scale-105 transition-all duration-200"
               onClick={stopCamera}
             >
               <X className="size-5" />
@@ -245,7 +305,9 @@ export default function FaceCapture({ onCapture }) {
           • Keep still during the 3-second countdown
         </p>
       </div>
-
     </div>
   );
 }
+
+
+

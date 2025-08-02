@@ -153,7 +153,8 @@ import mongoose from "mongoose";
       },
       phone: {
         type: String,
-        required: true,
+        required: false,
+        // required: true,
         unique: true
       },
       skills: {

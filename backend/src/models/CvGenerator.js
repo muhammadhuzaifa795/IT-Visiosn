@@ -32,6 +32,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 // models/CV.js (UPDATED - RECOMMENDED)
 import mongoose from 'mongoose';
 

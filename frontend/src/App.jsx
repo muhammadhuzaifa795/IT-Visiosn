@@ -26,7 +26,7 @@ import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
-// import Settings from "./pages/Settings.jsx";
+
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";

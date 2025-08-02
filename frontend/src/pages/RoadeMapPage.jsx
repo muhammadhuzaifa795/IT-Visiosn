@@ -871,16 +871,14 @@
 
 
 
-
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Toaster, toast } from "react-hot-toast"
 import { Menu, Transition } from "@headlessui/react" // Added for dropdown
-import useRoadMap from "../hooks/useRoadMap"
-import useAuthUser from "../hooks/useAuthUser"
+import useRoadMap from "../hooks/useRoadMap" // Adjusted path based on common project structure
+import useAuthUser from "../hooks/useAuthUser" // Adjusted path based on common project structure
 
 const RoadmapPage = () => {
   const { authUser } = useAuthUser()
@@ -891,57 +889,27 @@ const RoadmapPage = () => {
   const [expandedWeeks, setExpandedWeeks] = useState({})
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [roadmapToDelete, setRoadmapToDelete] = useState(null)
+
   // New state for search and filtering
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("newest") // newest, oldest, level
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
-const [selectedTopic, setSelectedTopic] = useState("MERN");
-const [selectedLevel, setSelectedLevel] = useState("Beginner");
+  // These values will be sent to the backend automatically
+  const [selectedTopic, setSelectedTopic] = useState("General Development") // Default topic
+  const [selectedLevel, setSelectedLevel] = useState("Beginner") // Default level
 
-
-
-  // New state for dropdown
   const [openDropdownId, setOpenDropdownId] = useState(null)
 
   const { createRoadmapMutation, getRoadmapQuery, deleteRoadmapMutation, queryClient } = useRoadMap()
 
-  if (!authUser) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-base-100">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto bg-error/10 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
-          <p className="text-error font-medium">Authentication Required</p>
-          <p className="text-base-content/60">You need to be logged in to view this page.</p>
-        </div>
-      </div>
-    )
-  }
-
-
-
-  
-const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!goal.trim()) {
       toast.error("Please enter a valid goal.", {
         duration: 3000,
         position: "top-right",
-        style: {
-          background: "hsl(var(--er))",
-          color: "hsl(var(--erc))",
-          borderRadius: "8px",
-          padding: "12px",
-        },
+        style: { background: "hsl(var(--er))", color: "hsl(var(--erc))", borderRadius: "8px", padding: "12px" },
       })
       return
     }
@@ -949,12 +917,7 @@ const handleSubmit = (e) => {
       toast.error("User authentication failed. Please log in again.", {
         duration: 3000,
         position: "top-right",
-        style: {
-          background: "hsl(var(--er))",
-          color: "hsl(var(--erc))",
-          borderRadius: "8px",
-          padding: "12px",
-        },
+        style: { background: "hsl(var(--er))", color: "hsl(var(--erc))", borderRadius: "8px", padding: "12px" },
       })
       return
     }
@@ -963,9 +926,10 @@ const handleSubmit = (e) => {
       data: {
         text: goal,
         userId: authUser._id,
+        topic: selectedTopic, // Automatically include the topic
+        level: selectedLevel, // Automatically include the level
       },
     }
-
     console.log("Sending payload:", payload)
     createRoadmapMutation.mutate(payload, {
       onSuccess: () => {
@@ -974,12 +938,7 @@ const handleSubmit = (e) => {
         toast.success("Roadmap created successfully!", {
           duration: 3000,
           position: "top-right",
-          style: {
-            background: "hsl(var(--su))",
-            color: "hsl(var(--suc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
+          style: { background: "hsl(var(--su))", color: "hsl(var(--suc))", borderRadius: "8px", padding: "12px" },
         })
         queryClient.invalidateQueries(["roadmap"])
         setTimeout(() => {
@@ -991,19 +950,11 @@ const handleSubmit = (e) => {
         toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`, {
           duration: 3000,
           position: "top-right",
-          style: {
-            background: "hsl(var(--er))",
-            color: "hsl(var(--erc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
+          style: { background: "hsl(var(--er))", color: "hsl(var(--erc))", borderRadius: "8px", padding: "12px" },
         })
       },
     })
   }
-
-
-
 
   const handleDelete = (roadmap) => {
     setRoadmapToDelete(roadmap)
@@ -1012,18 +963,12 @@ const handleSubmit = (e) => {
 
   const confirmDelete = () => {
     if (!roadmapToDelete?._id) return
-
     deleteRoadmapMutation.mutate(roadmapToDelete._id, {
       onSuccess: () => {
         toast.success("Roadmap deleted successfully!", {
           duration: 3000,
           position: "top-right",
-          style: {
-            background: "hsl(var(--su))",
-            color: "hsl(var(--suc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
+          style: { background: "hsl(var(--su))", color: "hsl(var(--suc))", borderRadius: "8px", padding: "12px" },
         })
         // Update the query data to remove the deleted roadmap
         queryClient.setQueryData(["roadmap"], (oldData) => {
@@ -1038,29 +983,14 @@ const handleSubmit = (e) => {
         toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`, {
           duration: 3000,
           position: "top-right",
-          style: {
-            background: "hsl(var(--er))",
-            color: "hsl(var(--erc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
+          style: { background: "hsl(var(--er))", color: "hsl(var(--erc))", borderRadius: "8px", padding: "12px" },
         })
       },
     })
   }
 
-  useEffect(() => {
-    if (submitted) {
-      const timer = setTimeout(() => setSubmitted(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [submitted])
-
   const toggleWeek = (weekId) => {
-    setExpandedWeeks((prev) => ({
-      ...prev,
-      [weekId]: !prev[weekId],
-    }))
+    setExpandedWeeks((prev) => ({ ...prev, [weekId]: !prev[weekId] }))
   }
 
   const openModal = (roadmap) => {
@@ -1082,14 +1012,12 @@ const handleSubmit = (e) => {
   // Filter and sort roadmaps
   const filteredAndSortedRoadmaps = useMemo(() => {
     const roadmaps = Array.isArray(getRoadmapQuery.data) ? getRoadmapQuery.data : []
-
     // Filter by search query
     const filtered = roadmaps.filter(
       (roadmap) =>
         roadmap.goal?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         roadmap.level?.toLowerCase().includes(searchQuery.toLowerCase()),
     )
-
     // Sort roadmaps
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -1103,9 +1031,36 @@ const handleSubmit = (e) => {
           return new Date(b.createdAt) - new Date(a.createdAt)
       }
     })
-
     return filtered
   }, [getRoadmapQuery.data, searchQuery, sortBy])
+
+  useEffect(() => {
+    if (submitted) {
+      const timer = setTimeout(() => setSubmitted(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [submitted])
+
+  if (!authUser) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-base-100">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 mx-auto bg-error/10 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+          <p className="text-error font-medium">Authentication Required</p>
+          <p className="text-base-content/60">You need to be logged in to view this page.</p>
+        </div>
+      </div>
+    )
+  }
 
   if (getRoadmapQuery.isLoading) {
     return (
@@ -1364,7 +1319,12 @@ const handleSubmit = (e) => {
                             setOpenDropdownId(openDropdownId === roadmap._id ? null : roadmap._id)
                           }}
                         >
-                          <svg className="w-5 h-5 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg
+                            className="w-5 h-5 text-base-content/60"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -1472,7 +1432,7 @@ const handleSubmit = (e) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  d="M21 21l-6-6m2-5a7 7 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138z"
                 />
               </svg>
             </div>
@@ -1504,7 +1464,7 @@ const handleSubmit = (e) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138z"
                 />
               </svg>
             </div>
@@ -1619,7 +1579,6 @@ const handleSubmit = (e) => {
                       </span>
                     )}
                   </h3>
-
                   {selectedRoadmap.weeks && selectedRoadmap.weeks.length > 0 ? (
                     <div className="space-y-4">
                       {selectedRoadmap.weeks.map((week, index) => (
@@ -1659,7 +1618,6 @@ const handleSubmit = (e) => {
                               </motion.div>
                             </div>
                           </button>
-
                           <AnimatePresence>
                             {expandedWeeks[week._id] && (
                               <motion.div
@@ -1741,7 +1699,8 @@ const handleSubmit = (e) => {
               <div className="p-6">
                 <h2 className="text-xl font-bold text-base-content mb-4">Delete Roadmap</h2>
                 <p className="text-base-content/70 mb-6">
-                  Are you sure you want to delete the roadmap "<span className="font-medium">{roadmapToDelete.goal}</span>"? This action cannot be undone.
+                  Are you sure you want to delete the roadmap "
+                  <span className="font-medium">{roadmapToDelete.goal}</span>"? This action cannot be undone.
                 </p>
                 <div className="flex justify-end gap-4">
                   <button
@@ -1751,11 +1710,7 @@ const handleSubmit = (e) => {
                   >
                     Cancel
                   </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="btn btn-error"
-                    disabled={deleteRoadmapMutation.isPending}
-                  >
+                  <button onClick={confirmDelete} className="btn btn-error" disabled={deleteRoadmapMutation.isPending}>
                     {deleteRoadmapMutation.isPending ? (
                       <span className="flex items-center">
                         <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
