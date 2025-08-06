@@ -1,6 +1,3 @@
-
-
-
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
@@ -209,7 +206,7 @@ export async function updateProfile(req, res) {
 
 
 
-export const sendOTP = async (req, res) => {
+export const sendOtp = async (req, res) => {
   const { phone, email } = req.body;
 
   try {
@@ -226,7 +223,7 @@ export const sendOTP = async (req, res) => {
     if (email) {
       await sendOtpEmail(email, otp);
     } else if (phone) {
-      await sendOTP(phone,otp)
+      await sendOtp(phone,otp)
     }
 
     res.status(200).json({ message: 'OTP sent successfully' });
