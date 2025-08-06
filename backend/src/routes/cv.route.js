@@ -38,4 +38,5 @@ router.put('/update/:id', protectRoute, updateCV);
 router.delete('/delete/:id', protectRoute, deleteCV);
 
 
+
 export default router;

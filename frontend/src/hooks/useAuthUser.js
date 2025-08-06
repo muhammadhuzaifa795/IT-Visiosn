@@ -11,12 +11,12 @@ const useAuthUser = () => {
   return {
     isLoading: authUser.isLoading,
     authUser: authUser.data?.user,
+    admin: authUser.data?.user.role==='admin'? true : false,
+    isAuthenticated: authUser.data?.user ? true : false,
   };
 };
 
 export default useAuthUser;
-
-
 
 // import { useQuery } from "@tanstack/react-query";
 // import { axiosInstance } from "../lib/axios";
@@ -34,4 +34,3 @@ export default useAuthUser;
 //   });
 
 // export default useAuthUser;
-

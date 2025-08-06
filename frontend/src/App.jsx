@@ -27,6 +27,9 @@ import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
 
+// admin
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminRoute from "./AdminRoute";
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
@@ -39,11 +42,11 @@ import { Settings } from "lucide-react";
 import Settingspage from "./pages/Settingspage.jsx";
 
 const App = () => {
-  const { isLoading, authUser } = useAuthUser();
+  const { isLoading, authUser ,admin } = useAuthUser();
   const { theme } = useThemeStore();
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
-
+  
   if (isLoading) return <PageLoader />;
 
   return (
@@ -53,14 +56,33 @@ const App = () => {
           path="/"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={true}>
-                <HomePage />
-              </Layout>
+              admin ? (
+                <Navigate
+                  to={!isAuthenticated ? "/login" : "/admin/dashboard"}
+                />
+              ) : (
+                <Layout showSidebar={true}>
+                  <HomePage />
+                </Layout>
+              )
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
             )
           }
         />
+
+        {/* admin */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <Layout showSidebar={false}>
+                <AdminDashboardPage />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+
         <Route
           path="/posts/:id"
           element={
@@ -152,7 +174,7 @@ const App = () => {
           path="/profile"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={true}>
+              <Layout showSidebar={!admin}>
                 <ProfilePage />
               </Layout>
             ) : (
@@ -245,8 +267,7 @@ const App = () => {
           }
         />
 
-
-         <Route
+        <Route
           path="/help"
           element={
             isAuthenticated && isOnboarded ? (
@@ -258,7 +279,7 @@ const App = () => {
             )
           }
         />
-            <Route
+        <Route
           path="/settingspage"
           element={
             isAuthenticated && isOnboarded ? (
@@ -270,8 +291,6 @@ const App = () => {
             )
           }
         />
-
-
 
         {/* Interview Routes */}
         <Route
@@ -286,7 +305,7 @@ const App = () => {
             )
           }
         />
-           <Route
+        <Route
           path="/leaderboard"
           element={
             isAuthenticated && isOnboarded ? (

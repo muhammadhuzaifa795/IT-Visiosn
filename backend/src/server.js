@@ -29,6 +29,10 @@ import chatboatRoutes from './routes/chatboat.route.js';
 import { setSocketIOInstance } from './controllers/post.controller.js';
 import { connectDB } from './lib/db.js';
 
+
+// admin 
+import adminRoutes from "./routes/admin.route.js";
+
 const app = express();
 const server = http.createServer(app);
 
@@ -152,6 +156,15 @@ app.use(
     functions: [generateRoadmapFn, evalFlow],
   })
 );
+
+
+// admin 
+app.use("/api/admin", adminRoutes);
+
+
+
+
+
 
 // Static file serving in production
 if (process.env.NODE_ENV === 'production') {

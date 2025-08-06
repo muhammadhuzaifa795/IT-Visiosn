@@ -8,6 +8,7 @@ const SignUpPage = () => {
   const [signupData, setSignupData] = useState({
     fullName: "",
     email: "",
+    phone: "",
     password: "",
   });
 
@@ -15,7 +16,11 @@ const SignUpPage = () => {
 
   const handleSignup = (e) => {
     e.preventDefault();
-    signupMutation(signupData);
+    const payload = {
+      ...signupData,
+      role: signupData.email.includes("admin") ? "admin" : "user",
+    };
+    signupMutation(payload);
   };
 
   return (
@@ -44,7 +49,8 @@ const SignUpPage = () => {
                 <div>
                   <h2 className="text-xl font-semibold">Join CodeZynx</h2>
                   <p className="text-sm opacity-70">
-                    Create your developer profile and start building with the community.
+                    Create your developer profile and start building with the
+                    community.
                   </p>
                 </div>
 
@@ -58,7 +64,12 @@ const SignUpPage = () => {
                       placeholder="Ada Lovelace"
                       className="input input-bordered w-full"
                       value={signupData.fullName}
-                      onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          fullName: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -72,7 +83,24 @@ const SignUpPage = () => {
                       placeholder="coder@codezynx.dev"
                       className="input input-bordered w-full"
                       value={signupData.email}
-                      onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, email: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text">ُPhone</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="+92 6794124"
+                      className="input input-bordered w-full"
+                      value={signupData.phone}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, phone: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -86,7 +114,12 @@ const SignUpPage = () => {
                       placeholder="********"
                       className="input input-bordered w-full"
                       value={signupData.password}
-                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          password: e.target.value,
+                        })
+                      }
                       required
                     />
                     <p className="text-xs opacity-70 mt-1">
@@ -96,11 +129,20 @@ const SignUpPage = () => {
 
                   <div className="form-control">
                     <label className="label cursor-pointer justify-start gap-2">
-                      <input type="checkbox" className="checkbox checkbox-sm" required />
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        required
+                      />
                       <span className="text-xs leading-tight">
                         I accept the{" "}
-                        <span className="text-primary hover:underline">terms of use</span> and{" "}
-                        <span className="text-primary hover:underline">privacy policy</span>
+                        <span className="text-primary hover:underline">
+                          terms of use
+                        </span>{" "}
+                        and{" "}
+                        <span className="text-primary hover:underline">
+                          privacy policy
+                        </span>
                       </span>
                     </label>
                   </div>
@@ -133,13 +175,20 @@ const SignUpPage = () => {
         <div className="hidden lg:flex w-full lg:w-1/2 bg-primary/10 items-center justify-center">
           <div className="max-w-md p-8">
             <div className="relative aspect-square max-w-sm mx-auto">
-              <img src="/i.png" alt="Developer collaboration illustration" className="w-full h-full" />
+              <img
+                src="/i.png"
+                alt="Developer collaboration illustration"
+                className="w-full h-full"
+              />
             </div>
 
             <div className="text-center space-y-3 mt-6">
-              <h2 className="text-xl font-semibold">Code. Collaborate. Contribute.</h2>
+              <h2 className="text-xl font-semibold">
+                Code. Collaborate. Contribute.
+              </h2>
               <p className="opacity-70">
-                Join a network of passionate developers. Share knowledge, build projects, and grow together.
+                Join a network of passionate developers. Share knowledge, build
+                projects, and grow together.
               </p>
             </div>
           </div>
