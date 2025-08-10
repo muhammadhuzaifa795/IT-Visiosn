@@ -111,7 +111,8 @@ const UserPage = () => {
                       <div className="flex flex-wrap gap-1.5">
                         <span className="badge badge-secondary">
                           {getLanguageFlag(user.nativeLanguage)}
-                          Native: {capitialize(user.nativeLanguage)}
+                          {/* Native: {capitialize(user.nativeLanguage)} */}
+                          Native: {capitialize(user?.nativeLanguage || "Unknown")}
                         </span>
                       </div>
 

@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
+import AdminNotificationsPage from "./pages/AdminNotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
@@ -19,6 +20,7 @@ import { Toaster } from "react-hot-toast";
 import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
+import Layoutadmin from "./components/Layoutadmin.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 import PasswordResetPage from "./pages/PasswordResetPage.jsx";
 import AddFacePage from "./pages/AddFacePage.jsx";
@@ -30,6 +32,7 @@ import Help from "./pages/Help.jsx";
 // admin
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AdminRoute from "./AdminRoute";
+import AdminUsers from "./pages/AdminUsers";
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
@@ -40,6 +43,10 @@ import Jarvis from "./components/Jarvis.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import { Settings } from "lucide-react";
 import Settingspage from "./pages/Settingspage.jsx";
+import AdminSettings from "./pages/AdminSettings.jsx";
+import AdminReports from "./pages/AdminReports.jsx";
+import AdminActivityLogs from "./pages/AdminActivityLogs.jsx";
+import AdminProfilePage from "./pages/AdminProfilePage.jsx";
 
 const App = () => {
   const { isLoading, authUser ,admin } = useAuthUser();
@@ -76,12 +83,55 @@ const App = () => {
           path="/admin/dashboard"
           element={
             <AdminRoute>
-              <Layout showSidebar={false}>
+              <Layoutadmin showSidebar={true}>
                 <AdminDashboardPage />
-              </Layout>
+              </Layoutadmin>
             </AdminRoute>
           }
         />
+
+         <Route
+          path="/admin/users"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminUsers />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+
+         <Route
+          path="/admin/reports"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminReports />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+         <Route
+          path="/admin/logs"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminActivityLogs />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+         <Route
+          path="/admin/settings"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminSettings />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+
 
         <Route
           path="/posts/:id"
@@ -134,6 +184,19 @@ const App = () => {
             )
           }
         />
+        {/* AdminNotificationsPage */}
+        <Route
+          path="/adminnotifications"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layoutadmin showSidebar={true}>
+                <AdminNotificationsPage />
+              </Layoutadmin>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
         <Route
           path="/call/:id"
           element={
@@ -174,7 +237,7 @@ const App = () => {
           path="/profile"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={!admin}>
+              <Layout showSidebar={true}>
                 <ProfilePage />
               </Layout>
             ) : (
@@ -182,6 +245,19 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="/adminprofile"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layoutadmin showSidebar={admin}>
+                <AdminProfilePage />
+              </Layoutadmin>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
         <Route
           path="/create-post"
           element={

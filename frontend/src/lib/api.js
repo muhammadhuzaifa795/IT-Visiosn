@@ -575,3 +575,25 @@ export const deleteChat = async (chatId) => {
   const response = await axiosInstance.delete(`/chatbot/chats/${chatId}`)
   return response.data
 }
+// admin 
+
+
+
+
+// Admin: Get all users
+export const getAllUsers = async () => {
+  const res = await axios.get("/api/admin/users");
+  return res.data;
+};
+
+// Admin: Get single user by ID
+export const getUserById = async (id) => {
+  const res = await axios.get(`/api/admin/user/${id}`);
+  return res.data;
+};
+
+// Admin: Delete user by ID
+export const deleteUserById = async (id) => {
+  const res = await axios.delete(`/api/admin/user/${id}`);
+  return res.data;
+};

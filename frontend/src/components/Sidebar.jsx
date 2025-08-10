@@ -332,15 +332,21 @@
 
 
 "use client"
-import { Link, useLocation } from "react-router"
+import { Link, useLocation ,useNavigate} from "react-router"
 import useAuthUser from "../hooks/useAuthUser"
 import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, TrophyIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
+import useLogout from "../hooks/useLogout"; // ✅ Ensure this path is correct
 
 const useCopyToClipboard = () => {
+    
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false)
+
+
+  
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -410,6 +416,15 @@ const Sidebar = () => {
     setIsMobileSidebarOpen((prev) => !prev)
   }
 
+const { logoutMutation, isPending } = useLogout();
+    // ✅ Define logout handler
+  const handleLogout = () => {
+    logoutMutation(undefined, {
+      onSuccess: () => {
+        navigate("/login"); // ✅ Redirect after successful logout
+      },
+    });
+  };
   const navItems = [
     { to: "/", label: "Home", icon: HomeIcon, gradient: "from-blue-500/20 to-cyan-500/20" },
     { to: "/create-post", label: "Create Post", icon: PodcastIcon, gradient: "from-purple-500/20 to-pink-500/20" },
@@ -427,7 +442,7 @@ const Sidebar = () => {
     { to: "/chatbot", label: "Chatbot", icon: MessageCircleIcon, gradient: "from-green-500/20 to-teal-500/20" },
     { to: "/settingspage", label: "Settingspage", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
     { to: "/help", label: "Help", icon: HelpCircleIcon, gradient: "from-cyan-500/20 to-blue-500/20" },
-    { to: "/logout", label: "Logout", icon: LogOutIcon, gradient: "from-red-500/20 to-orange-500/20" },
+    // { to: "/logout", label: "Logout", icon: LogOutIcon, gradient: "from-red-500/20 to-orange-500/20" },
   ]
 
   const sidebarVariants = {
@@ -718,6 +733,16 @@ const Sidebar = () => {
               )}
             </div>
           ))}
+          
+                  {/* ✅ Logout Button */}
+                  <button
+                    onClick={handleLogout}
+                    disabled={isPending}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-left w-full hover:bg-base-200 transition-all duration-200"
+                  >
+                    <LogOutIcon className="w-5 h-5" />
+                    Logout
+                  </button>
         </nav>
 
         {/* Desktop User Section */}

@@ -2,7 +2,7 @@ import express from "express";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { isAdmin } from "../middleware/admin.middleware.js";
 
-// Example admin controller (placeholder, update as needed)
+// Controllers
 import {
   getAllUsers,
   deleteUser,
