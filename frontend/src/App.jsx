@@ -184,7 +184,7 @@ const App = () => {
             )
           }
         />
-        {/* AdminNotificationsPage */}
+        
         <Route
           path="/adminnotifications"
           element={

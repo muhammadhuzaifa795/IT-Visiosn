@@ -438,17 +438,11 @@ export const updateCV = async ({ _id, updatedData }) => {
   return response.data
 }
 
-// // **** Yahan change kiya hai: cvId ko destructure kiya hai ****
-// export const deleteCV = async ({ cvId }) => {
-//   // cvId ab object se nikala jayega
-//   const res = await axiosInstance.delete(`/cv/delete/${cvId}`)
-//   return res.data
-// }
 
 
 
 export const deleteCV = async ({ cvId }) => {
-  const token = localStorage.getItem("token"); // ya jahan se token milta ho
+  const token = localStorage.getItem("token"); 
 
   const res = await axiosInstance.delete(`/cv/delete/${cvId}`, {
     headers: {

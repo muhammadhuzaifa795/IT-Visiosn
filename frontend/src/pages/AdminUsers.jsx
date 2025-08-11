@@ -5,20 +5,25 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios
-      .get("/api/admin/users")
-      .then((res) => {
-        // ✅ backend me "users" key hai
-        if (Array.isArray(res.data.users)) {
-          setUsers(res.data.users);
-        } else {
-          setUsers([]); // fallback
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setUsers([]);
-      });
+   
+
+axios.get("http://localhost:5000/api/admin/users", { withCredentials: true })
+
+  .then((res) => {
+    // console.log("API Response:", res.data); 
+    if (Array.isArray(res.data.users)) {
+      setUsers(res.data.users);
+    } else {
+      setUsers([]);
+    }
+  })
+  .catch((err) => {
+    console.error("API Error:", err.response?.data || err.message);
+    setUsers([]);
+  });
+
+// console.log(res.data);
+
   }, []);
 
   return (
@@ -38,7 +43,7 @@ const AdminUsers = () => {
             {users.length > 0 ? (
               users.map((user) => (
                 <tr key={user._id} className="hover:bg-base-200">
-                  <td className="px-4 py-2">{user.fullName}</td>
+                  <td className="px-4 py-2">{user.fullname}</td>
                   <td className="px-4 py-2">{user.email}</td>
                   <td className="px-4 py-2">{user.role}</td>
                 </tr>
