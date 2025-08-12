@@ -11,7 +11,7 @@ import { generateRoadmapFn } from './inngest/functions/roadmap.function.js';
 import { evalFlow } from './inngest/functions/interview.function.js';
 import Interview from './models/Interview.js';
 import { generateQuestion } from './inngest/agent.js';
-import { protectRoute } from './middleware/auth.middleware.js'; // Changed from authMiddleware to protectRoute
+import { protectRoute } from './middleware/auth.middleware.js'; 
 
 // Routes
 import authRoutes from './routes/auth.route.js';
