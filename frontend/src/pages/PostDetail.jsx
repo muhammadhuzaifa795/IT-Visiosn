@@ -1,7 +1,4 @@
 
-
-
-// src/pages/PostDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getAllPosts, togglePostLike } from "../lib/api";

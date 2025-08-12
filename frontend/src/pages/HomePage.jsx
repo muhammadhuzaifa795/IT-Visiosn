@@ -3,7 +3,7 @@ import { getAllPosts, updatePost, deletePost } from '../lib/api';
 import { FiMoreVertical, FiEdit, FiTrash2 } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
-import useAuthUser from '../hooks/useAuthUser'; // adjust path if needed
+import useAuthUser from '../hooks/useAuthUser'; 
 import { useTogglePostLike } from "../hooks/usePostActions";
 import { LoaderIcon } from 'lucide-react';
 

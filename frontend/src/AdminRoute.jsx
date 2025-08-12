@@ -1,5 +1,5 @@
 import { Navigate } from "react-router";
-import useAuthUser from "./hooks/useAuthUser"; // path adjust karo agar hooks folder aur jagah ho
+import useAuthUser from "./hooks/useAuthUser"; 
 
 const AdminRoute = ({ children }) => {
   const { authUser, isLoading, isAuthenticated } = useAuthUser();

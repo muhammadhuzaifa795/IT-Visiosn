@@ -1,13 +1,4 @@
 
-
-
-
-
-
-
-
-
-
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateUserProfile } from "../lib/api";

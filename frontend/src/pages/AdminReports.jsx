@@ -15,7 +15,6 @@ import {
   ChevronDown,
 } from "lucide-react"
 
-// Custom Dropdown Component
 function CustomDropdown({ label, value, options, onChange, isOpen, setIsOpen }) {
   const selectedOption = options.find((opt) => opt.id === value)
 
@@ -55,9 +54,9 @@ function CustomDropdown({ label, value, options, onChange, isOpen, setIsOpen }) 
 export default function AdminReports() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
-  const [status, setStatus] = useState("all") // 'all' | 'open' | 'in_progress' | 'resolved' | 'closed'
-  const [priority, setPriority] = useState("all") // 'all' | 'low' | 'medium' | 'high' | 'critical'
-  const [range, setRange] = useState("14") // '7' | '14' | '30'
+  const [status, setStatus] = useState("all") 
+  const [priority, setPriority] = useState("all") 
+  const [range, setRange] = useState("14") 
   const [reports, setReports] = useState([])
 
   // Dropdown states

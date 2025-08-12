@@ -41,7 +41,7 @@ import InterviewResultPage from "./pages/InterviewResultPage.jsx";
 import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx";
 import Jarvis from "./components/Jarvis.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
-import { Settings } from "lucide-react";
+
 import Settingspage from "./pages/Settingspage.jsx";
 import AdminSettings from "./pages/AdminSettings.jsx";
 import AdminReports from "./pages/AdminReports.jsx";

@@ -19,7 +19,7 @@ const Leaderboard = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [showAllUsers, setShowAllUsers] = useState(false)
 
-  // Dummy data for top 3 winners
+ 
   const topThree = [
     {
       id: 1,
@@ -59,7 +59,6 @@ const Leaderboard = () => {
     },
   ]
 
-  // Dummy data for remaining participants
   const otherParticipants = [
     {
       id: 4,
@@ -127,7 +126,7 @@ const Leaderboard = () => {
   ]
 
   useEffect(() => {
-    // Simulate loading
+
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
@@ -303,7 +302,6 @@ const Leaderboard = () => {
                 </div>
               </div>
 
-              {/* Podium */}
               <div
                 className={`bg-gradient-to-t ${getRankColor(2)} backdrop-blur-md rounded-t-3xl h-20 md:h-24 w-40 md:w-48 border border-base-300/30 shadow-xl flex items-center justify-center`}
               >
@@ -318,7 +316,7 @@ const Leaderboard = () => {
               transition={{ duration: 0.8, delay: 0.5 }}
               className="relative flex flex-col items-center"
             >
-              {/* Avatar positioned above the podium */}
+            
               <div className="relative mb-4">
                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-full ring-4 ring-amber-400/50 ring-offset-4 ring-offset-base-100 overflow-hidden">
                   <img
@@ -335,7 +333,6 @@ const Leaderboard = () => {
                 />
               </div>
 
-              {/* User Info Card */}
               <div className="bg-base-100/80 backdrop-blur-md rounded-2xl p-4 border border-base-300/50 shadow-2xl mb-4 w-44 md:w-52 text-center">
                 <h3 className="font-bold text-xl text-base-content truncate">{topThree[0].name}</h3>
                 <p className="text-sm text-base-content/60 mb-2">{topThree[0].specialty}</p>
@@ -355,7 +352,7 @@ const Leaderboard = () => {
                 </div>
               </div>
 
-              {/* Podium */}
+          
               <div
                 className={`bg-gradient-to-t ${getRankColor(1)} backdrop-blur-md rounded-t-3xl h-28 md:h-32 w-44 md:w-52 border border-base-300/30 shadow-2xl flex items-center justify-center`}
               >
@@ -370,7 +367,7 @@ const Leaderboard = () => {
               transition={{ duration: 0.8, delay: 0.7 }}
               className="relative flex flex-col items-center"
             >
-              {/* Avatar positioned above the podium */}
+            
               <div className="relative mb-4">
                 <div className="w-18 h-18 md:w-20 md:h-20 rounded-full ring-4 ring-amber-600/30 ring-offset-4 ring-offset-base-100 overflow-hidden">
                   <img
@@ -382,7 +379,6 @@ const Leaderboard = () => {
                 <div className="absolute -top-1 -right-1">{getRankIcon(3)}</div>
               </div>
 
-              {/* User Info Card */}
               <div className="bg-base-100/80 backdrop-blur-md rounded-2xl p-4 border border-base-300/50 shadow-xl mb-4 w-36 md:w-44 text-center">
                 <h3 className="font-bold text-base text-base-content truncate">{topThree[2].name}</h3>
                 <p className="text-xs text-base-content/60 mb-2">{topThree[2].specialty}</p>
@@ -392,7 +388,6 @@ const Leaderboard = () => {
                 </div>
               </div>
 
-              {/* Podium */}
               <div
                 className={`bg-gradient-to-t ${getRankColor(3)} backdrop-blur-md rounded-t-3xl h-16 md:h-20 w-36 md:w-44 border border-base-300/30 shadow-lg flex items-center justify-center`}
               >
@@ -402,7 +397,7 @@ const Leaderboard = () => {
           </div>
         </motion.div>
 
-        {/* Remaining Participants List */}
+      
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}

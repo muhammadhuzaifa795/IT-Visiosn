@@ -31,7 +31,7 @@ const Settingspage = () => {
   const [activeSection, setActiveSection] = useState("profile")
   const [showPassword, setShowPassword] = useState(false)
 
-  // Settings states
+ 
   const [settings, setSettings] = useState({
     profile: {
       fullName: "John Doe",

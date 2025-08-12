@@ -1,92 +1,100 @@
-
-
-
-
-
 import User from "../models/User.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
-// ✅ Get all users (admin only)
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // hide password
-    res.status(200).json({ success: true, users });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    const users = await User.find({}).select("-password");
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "User deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
-// ✅ Get a single user by ID
 export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
-
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({ error: "User not found." });
     }
-
-    res.status(200).json({ success: true, user });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
-// ✅ Delete a user by ID
-export const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    res.status(200).json({ success: true, message: "User deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
-// ✅ Create a new user (admin only)
 export const createUser = async (req, res) => {
   try {
-    const { fullname, email, password, role } = req.body;
+    const { fullname, email, password, role, phone } = req.body;
 
-    // Validate input
     if (!fullname || !email || !password || !role) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ error: "Please provide all required fields." });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: "Email already exists" });
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res
+        .status(400)
+        .json({ error: "User with this email already exists." });
     }
 
-    // Hash password
+    if (phone) {
+      const phoneExists = await User.findOne({ phone });
+      if (phoneExists) {
+        return res
+          .status(400)
+          .json({ error: "User with this phone number already exists." });
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create new user
     const newUser = new User({
       fullname,
       email,
+      phone: phone || undefined,
       password: hashedPassword,
       role,
     });
 
     await newUser.save();
 
-    // Return user without password
-    const userResponse = {
-      _id: newUser._id,
-      fullname: newUser.fullname,
-      email: newUser.email,
-      role: newUser.role,
-    };
+    res.status(201).json({
+      message: "User created successfully",
+      user: {
+        _id: newUser._id,
+        fullname: newUser.fullname,
+        email: newUser.email,
+        phone: newUser.phone,
+        role: newUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
 
-    res.status(201).json({ success: true, user: userResponse, message: "User created successfully" });
-  } catch (err) {
-    console.error("Create User Error:", err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    if (error.code === 11000) {
+      res.status(400).json({ error: "Duplicate phone number detected." });
+    } else {
+      res.status(500).json({ error: "Internal server error." });
+    }
   }
 };

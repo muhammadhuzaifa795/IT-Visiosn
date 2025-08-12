@@ -16,7 +16,6 @@ import {
   ChevronDown,
 } from "lucide-react"
 
-// Custom Dropdown Component
 function CustomDropdown({ label, value, options, onChange, isOpen, setIsOpen }) {
   const selectedOption = options.find((opt) => opt.id === value)
 
@@ -56,14 +55,14 @@ function CustomDropdown({ label, value, options, onChange, isOpen, setIsOpen }) 
 export default function AdminActivityLogs() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
-  const [status, setStatus] = useState("all") // 'all' | 'success' | 'failure'
-  const [action, setAction] = useState("all") // 'all' | 'create' | 'update' | 'delete' | 'login' | 'logout' | 'export' | 'import' | 'access'
-  const [role, setRole] = useState("all") // 'all' | 'admin' | 'editor' | 'viewer'
-  const [range, setRange] = useState("14") // '7' | '14' | '30'
+  const [status, setStatus] = useState("all") 
+  const [action, setAction] = useState("all") 
+  const [role, setRole] = useState("all") 
+  const [range, setRange] = useState("14") 
   const [logs, setLogs] = useState([])
-  const [view, setView] = useState(null) // currently selected log for quick view
+  const [view, setView] = useState(null) 
 
-  // Dropdown states
+ 
   const [statusOpen, setStatusOpen] = useState(false)
   const [actionOpen, setActionOpen] = useState(false)
   const [roleOpen, setRoleOpen] = useState(false)
@@ -281,7 +280,7 @@ export default function AdminActivityLogs() {
         l.entityType,
         l.entityId,
         l.ip,
-        l.ua.replaceAll(",", " "), // avoid breaking CSV
+        l.ua.replaceAll(",", " "), 
         l.status,
         l.createdAt,
         l.details?.replaceAll(",", " "),
