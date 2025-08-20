@@ -47,6 +47,7 @@ import AdminSettings from "./pages/AdminSettings.jsx";
 import AdminReports from "./pages/AdminReports.jsx";
 import AdminActivityLogs from "./pages/AdminActivityLogs.jsx";
 import AdminProfilePage from "./pages/AdminProfilePage.jsx";
+import AdminUserProfile from "./pages/AdminUserProfile.jsx";
 
 const App = () => {
   const { isLoading, authUser ,admin } = useAuthUser();
@@ -96,6 +97,16 @@ const App = () => {
             <AdminRoute>
               <Layoutadmin showSidebar={true}>
                 <AdminUsers />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+         <Route
+          path="/admin/user/:userId"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminUserProfile/>
               </Layoutadmin>
             </AdminRoute>
           }
