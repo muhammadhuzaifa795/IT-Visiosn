@@ -439,7 +439,6 @@ const { logoutMutation, isPending } = useLogout();
     { to: "/notifications", label: "Notifications", icon: BellIcon, gradient: "from-yellow-500/20 to-orange-500/20" },
     { to: "/password-reset", label: "Password Reset", icon: KeyIcon, gradient: "from-red-500/20 to-pink-500/20" },
     { to: "/add-face", label: "Add Face", icon: KeyIcon, gradient: "from-blue-500/20 to-indigo-500/20" },
-    { to: "/chatbot", label: "Chatbot", icon: MessageCircleIcon, gradient: "from-green-500/20 to-teal-500/20" },
     { to: "/settingspage", label: "Settingspage", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
     { to: "/help", label: "Help", icon: HelpCircleIcon, gradient: "from-cyan-500/20 to-blue-500/20" },
     // { to: "/logout", label: "Logout", icon: LogOutIcon, gradient: "from-red-500/20 to-orange-500/20" },
