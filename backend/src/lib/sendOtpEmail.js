@@ -1,12 +1,12 @@
 // lib/sendOtpEmail.ts
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_MAIL_API);
+const resend = new Resend(process.env.RESEND_API_KEY); // ✅ fixed variable
 
 export const sendOtpEmail = async (email, otp) => {
   try {
-    const { error } = await resend.emails.send({
-      from: 'Your App <onboarding@resend.dev>',
+    const { data, error } = await resend.emails.send({
+      from: 'Your App <onboarding@resend.dev>', // ✅ works only in sandbox with verified emails
       to: [email],
       subject: 'Your OTP Code',
       html: `
@@ -20,12 +20,13 @@ export const sendOtpEmail = async (email, otp) => {
     });
 
     if (error) {
+      console.error("Resend API error:", error);
       throw new Error(error.message);
     }
 
-    console.log(`✅ OTP sent to ${email}`);
+    console.log(`✅ OTP sent to ${email}`, data);
   } catch (err) {
-    console.error('❌ Failed to send OTP email:', err.message);
+    console.error('❌ Failed to send OTP email:', err);
     throw err;
   }
 };

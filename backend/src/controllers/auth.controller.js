@@ -293,7 +293,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { sendOtp } from "../lib/sendOtp.js";
 import { generateOTP } from "../lib/generateOtp.js";
-import { sendOtpEmail } from "../lib/sendOtpEmail.js";
+import {sendOtpEmail} from "../lib/sendOtpEmail.js"
 // admin
 
 // SIGNUP
@@ -516,15 +516,16 @@ export async function updateProfile(req, res) {
 }
 
 // SEND OTP
+
 export const sendOTP = async (req, res) => {
   const { phone, email } = req.body;
 
   try {
     const user = await User.findOne({ $or: [{ phone }, { email }] });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const otp = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
     user.otp = otp;
     user.otpExpiresAt = otpExpiresAt;
@@ -533,22 +534,21 @@ export const sendOTP = async (req, res) => {
     if (email) {
       await sendOtpEmail(email, otp);
     } else if (phone) {
-      await sendOTP(phone, otp);
+      await sendOTP(phone,otp)
     }
 
-    res.status(200).json({ message: "OTP sent successfully" });
+    res.status(200).json({ message: 'OTP sent successfully' });
   } catch (err) {
-    res.status(500).json({ message: "Failed to send OTP", error: err.message });
+    res.status(500).json({ message: 'Failed to send OTP', error: err.message });
   }
 };
 
-// RESEND OTP
 export const resendOtp = async (req, res) => {
   const { email } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const otp = generateOTP();
     user.otp = otp;
@@ -557,54 +557,45 @@ export const resendOtp = async (req, res) => {
 
     await sendOtpEmail(email, otp);
 
-    res.status(200).json({ message: "OTP resent successfully" });
+    res.status(200).json({ message: 'OTP resent successfully' });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to resend OTP", error: err.message });
+    res.status(500).json({ message: 'Failed to resend OTP', error: err.message });
+    console.log(err)
   }
 };
 
-// VERIFY OTP
 export const verifyOTPHandler = async (req, res) => {
   const { phone, email, otp } = req.body;
 
   try {
     const user = await User.findOne({ $or: [{ phone }, { email }] });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    if (user.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date())
-      return res.status(400).json({ message: "OTP expired" });
+    if (user.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    if (user.otpExpiresAt < new Date()) return res.status(400).json({ message: 'OTP expired' });
 
     user.otp = null;
     user.otpExpiresAt = null;
     await user.save();
 
-    res.json({ message: "OTP verified. You may now reset your password." });
+    res.json({ message: 'OTP verified. You may now reset your password.' });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "OTP verification failed", error: err.message });
+    res.status(500).json({ message: 'OTP verification failed', error: err.message });
   }
 };
 
-// RESET PASSWORD
 export const resetPassword = async (req, res) => {
   const { phone, email, newPassword } = req.body;
 
   try {
     const user = await User.findOne({ $or: [{ phone }, { email }] });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.password = newPassword;
+    user.password = newPassword; // 🔐 Make sure to hash password if not already
     await user.save();
 
-    res.json({ message: "Password changed successfully" });
+    res.json({ message: 'Password changed successfully' });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Password change failed", error: err.message });
+    res.status(500).json({ message: 'Password change failed', error: err.message });
   }
 };
