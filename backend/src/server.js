@@ -9,6 +9,7 @@ import { inngest } from './inngest/client.js';
 import { serve } from 'inngest/express';
 import { generateRoadmapFn } from './inngest/functions/roadmap.function.js';
 import { evalFlow } from './inngest/functions/interview.function.js';
+import {onTicketCreated} from "./inngest/functions/ticket-create.function.js"
 import Interview from './models/Interview.js';
 import { generateQuestion } from './inngest/agent.js';
 import { protectRoute } from './middleware/auth.middleware.js'; 
@@ -26,6 +27,7 @@ import roadMapRoutes from './routes/road-map.route.js';
 import interviewRoutes from './routes/interview.route.js';
 import resultRoutes from './routes/result.routes.js';
 import chatboatRoutes from './routes/chatboat.route.js';
+import ticketRoutes from "./routes/ticket.route.js"
 import { setSocketIOInstance } from './controllers/post.controller.js';
 import { connectDB } from './lib/db.js';
 
@@ -149,11 +151,12 @@ app.use('/api/roadmap', protectRoute, roadMapRoutes); // Changed from authMiddle
 app.use('/api/interview', protectRoute, interviewRoutes);
 app.use('/api/results', protectRoute, resultRoutes);
 app.use('/api/chatbot', protectRoute, chatboatRoutes);
+app.use('/api/ticket', protectRoute, ticketRoutes);
 app.use(
   '/api/inngest',
   serve({
     client: inngest,
-    functions: [generateRoadmapFn, evalFlow],
+    functions: [generateRoadmapFn, evalFlow,onTicketCreated],
   })
 );
 

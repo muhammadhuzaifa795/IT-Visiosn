@@ -334,7 +334,7 @@
 "use client"
 import { Link, useLocation ,useNavigate} from "react-router"
 import useAuthUser from "../hooks/useAuthUser"
-import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, TrophyIcon } from 'lucide-react'
+import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, Ticket,TrophyIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
@@ -432,6 +432,7 @@ const { logoutMutation, isPending } = useLogout();
     { to: "/ai-prompt", label: "AI Prompt", icon: Code2Icon, gradient: "from-orange-500/20 to-red-500/20" },
     { to: "/roadmap", label: "Road Map", icon: MapIcon, gradient: "from-indigo-500/20 to-purple-500/20" },
     { to: "/interviews", label: "Mock Interview", icon: UserRound, gradient: "from-teal-500/20 to-cyan-500/20" },
+    { to: "/tickets", label: "Tickets", icon: Ticket, gradient: "from-teal-500/20 to-cyan-500/20" },
     { to: "/leaderboard", label: "Leader Board", icon: TrophyIcon, gradient: "from-amber-500/20 to-yellow-500/20" }, // New leaderboard item
     // { to: "/settings", label: "Settings", icon: TrophyIcon, gradient: "from-amber-500/20 to-yellow-500/20" }, // New Settings item
     { to: "/friends", label: "Friends", icon: UsersIcon, gradient: "from-pink-500/20 to-rose-500/20" },

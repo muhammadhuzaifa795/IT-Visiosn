@@ -290,10 +290,10 @@
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
 import { sendOtp } from "../lib/sendOtp.js";
 import { generateOTP } from "../lib/generateOtp.js";
 import {sendOtpEmail} from "../lib/sendOtpEmail.js"
+import bcrypt from "bcrypt";
 // admin
 
 // SIGNUP
@@ -546,21 +546,32 @@ export const sendOTP = async (req, res) => {
 export const resendOtp = async (req, res) => {
   const { email } = req.body;
 
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Agar fullname missing hai, fallback assign kar do
+    if (!user.fullname) user.fullname = "User";
 
     const otp = generateOTP();
     user.otp = otp;
-    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
     await user.save();
 
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(user.email, otp, user.fullname);
 
-    res.status(200).json({ message: 'OTP resent successfully' });
+    return res.status(200).json({ message: "OTP resent successfully" });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to resend OTP', error: err.message });
-    console.log(err)
+    console.error("❌ Resend OTP error:", err);
+    return res.status(500).json({
+      message: "Failed to resend OTP",
+      error: err.message,
+    });
   }
 };
 
@@ -584,18 +595,28 @@ export const verifyOTPHandler = async (req, res) => {
   }
 };
 
+
 export const resetPassword = async (req, res) => {
   const { phone, email, newPassword } = req.body;
 
   try {
+    // Find user by phone or email
     const user = await User.findOne({ $or: [{ phone }, { email }] });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    user.password = newPassword; // 🔐 Make sure to hash password if not already
+    // Hash the new password
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Assign hashed password and save
+    user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: 'Password changed successfully' });
+    res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
-    res.status(500).json({ message: 'Password change failed', error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Password change failed", error: err.message });
   }
 };

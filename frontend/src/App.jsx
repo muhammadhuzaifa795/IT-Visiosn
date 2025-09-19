@@ -24,6 +24,9 @@ import Layoutadmin from "./components/Layoutadmin.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 import PasswordResetPage from "./pages/PasswordResetPage.jsx";
 import AddFacePage from "./pages/AddFacePage.jsx";
+import UploadTicket from "./pages/UploadTicket.jsx";
+import TicketsPage from "./pages/TicketsPage.jsx";
+import TicketDetailPage from "./pages/TicketDetailPage.jsx";
 import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
@@ -50,11 +53,11 @@ import AdminProfilePage from "./pages/AdminProfilePage.jsx";
 import AdminUserProfile from "./pages/AdminUserProfile.jsx";
 
 const App = () => {
-  const { isLoading, authUser ,admin } = useAuthUser();
+  const { isLoading, authUser, admin } = useAuthUser();
   const { theme } = useThemeStore();
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
-  
+
   if (isLoading) return <PageLoader />;
 
   return (
@@ -91,7 +94,7 @@ const App = () => {
           }
         />
 
-         <Route
+        <Route
           path="/admin/users"
           element={
             <AdminRoute>
@@ -101,18 +104,18 @@ const App = () => {
             </AdminRoute>
           }
         />
-         <Route
+        <Route
           path="/admin/user/:userId"
           element={
             <AdminRoute>
               <Layoutadmin showSidebar={true}>
-                <AdminUserProfile/>
+                <AdminUserProfile />
               </Layoutadmin>
             </AdminRoute>
           }
         />
 
-         <Route
+        <Route
           path="/admin/reports"
           element={
             <AdminRoute>
@@ -122,7 +125,7 @@ const App = () => {
             </AdminRoute>
           }
         />
-         <Route
+        <Route
           path="/admin/logs"
           element={
             <AdminRoute>
@@ -132,7 +135,7 @@ const App = () => {
             </AdminRoute>
           }
         />
-         <Route
+        <Route
           path="/admin/settings"
           element={
             <AdminRoute>
@@ -195,7 +198,7 @@ const App = () => {
             )
           }
         />
-        
+
         <Route
           path="/adminnotifications"
           element={
@@ -471,6 +474,42 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <CVPreview />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/tickets"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <TicketsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/ticket/upload"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <UploadTicket />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/ticket/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <TicketDetailPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

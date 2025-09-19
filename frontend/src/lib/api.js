@@ -281,6 +281,38 @@ export const deleteUserResults = async (resultId) => {
   return response.data
 }
 
+
+export const createTicket = async (formData) => {
+  const res = await axiosInstance.post("/ticket/create-ticket", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+
+
+export const getTicket = async () => {
+  const res = await axiosInstance.get("/ticket/tickets")
+  return res.data
+}
+
+export const getTicketById = async (id) => {
+  const res = await axiosInstance.get(`/ticket/tickets/${id}`);
+  return res.data.ticket;
+};
+
+export const deleteTicket = async (ticketId) => {
+  const res = await axiosInstance.delete(`/ticket/tickets/${ticketId}`);
+  return res.data;
+};
+
+export const addSolutionToTicket = async (ticketId, solutionText) => {
+  const res = await axiosInstance.post(`/ticket/add-solution/${ticketId}`, { solutionText });
+  return res.data;
+};
+
+
+
 // Chatbot API functions
 export const createChatbotMessage = async ({ userId, message }) => {
   if (!userId) throw new Error("User ID is required")
@@ -332,3 +364,6 @@ export const createUser = async (userData) => {
   const res = await axiosInstance.post("/admin/user", userData)
   return res.data
 }
+
+
+
