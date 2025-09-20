@@ -27,6 +27,7 @@ import roadMapRoutes from './routes/road-map.route.js';
 import interviewRoutes from './routes/interview.route.js';
 import resultRoutes from './routes/result.routes.js';
 import chatboatRoutes from './routes/chatboat.route.js';
+import leaderboardRoutes from './routes/leaderboard.route.js';
 import ticketRoutes from "./routes/ticket.route.js"
 import { setSocketIOInstance } from './controllers/post.controller.js';
 import { connectDB } from './lib/db.js';
@@ -152,6 +153,7 @@ app.use('/api/interview', protectRoute, interviewRoutes);
 app.use('/api/results', protectRoute, resultRoutes);
 app.use('/api/chatbot', protectRoute, chatboatRoutes);
 app.use('/api/ticket', protectRoute, ticketRoutes);
+app.use('/api/leaderboard', protectRoute, leaderboardRoutes);
 app.use(
   '/api/inngest',
   serve({

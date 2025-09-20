@@ -52,9 +52,9 @@ export const createTicket = async (req, res) => {
 // ✅ Fetch tickets excluding completed
 export const getTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ status: { $ne: "completed" } }).sort({
-      createdAt: -1,
-    });
+    const tickets = await Ticket.find()
+     .populate("createdBy", "fullName email profilePic")
+    .sort({ createdAt: -1 }); // newest first
 
     return res.status(200).json({
       message: "Tickets fetched successfully",
@@ -65,6 +65,7 @@ export const getTickets = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 // ✅ Delete ticket
@@ -104,8 +105,9 @@ export const getTicketById = async (req, res) => {
     const { id } = req.params;
 
     const ticket = await Ticket.findById(id)
-      .populate("createdBy", "fullName email")
-      .populate("assignedTo", "fullName email");
+      .populate("createdBy", "fullName email profilePic")
+      .populate("assignedTo", "fullName email profilePic")
+      .populate("solutions.user", "fullName email profilePic"); // ✅ Populate user in solutions
 
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });

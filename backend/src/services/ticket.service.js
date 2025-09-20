@@ -7,7 +7,7 @@ const analyzeTicket = async (ticket) => {
       apiKey: process.env.GEMINI_API_KEY,
     }),
     name: "AI Ticket Triage Assistant",
-    system: `You are an expert AI assistant that processes technical support tickets. 
+    system: `ou are an expert AI assistant that processes technical support tickets. 
 
 Your job is to:
 1. Summarize the issue.
@@ -20,7 +20,7 @@ IMPORTANT:
 - Do NOT include markdown, code fences, comments, or any extra formatting.
 - The format must be a raw JSON object.
 
-Repeat: Do not wrap your output in markdown or code fences.`,
+Repeat: Do not wrap your output in markdown or code fences..`,
   });
 
   try {

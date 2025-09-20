@@ -56,6 +56,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+     faces: [
+      {
+        descriptor: [Number],
+        cloudinaryUrl: String,
+        publicId: String,
+      },
+    ],
     friends: [
       {
         type: mongoose.Schema.Types.ObjectId,

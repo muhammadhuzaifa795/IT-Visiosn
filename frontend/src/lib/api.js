@@ -37,14 +37,14 @@ export const updateUserProfile = async (profileData) => {
 }
 
 export const addFace = (formData) =>
-  axiosInstance.post("/face-auth/add-face", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
+  axiosInstance.post('/face-auth/add-face', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 
 export const loginWithFace = (formData) =>
-  axiosInstance.post("/face-auth/login-with-face", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
+  axiosInstance.post('/face-auth/login-with-face', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 
 export const sendOTP = async (phone) => {
   const response = await axiosInstance.post("/auth/send-otp", phone)
@@ -308,6 +308,18 @@ export const deleteTicket = async (ticketId) => {
 
 export const addSolutionToTicket = async (ticketId, solutionText) => {
   const res = await axiosInstance.post(`/ticket/add-solution/${ticketId}`, { solutionText });
+  return res.data;
+};
+
+
+export const addUserToLeaderboard = async (userId, ticketId) => {
+  const res = await axiosInstance.post("/leaderboard/adduser-leaderboard-post", { userId, ticketId });
+  return res.data;
+};
+
+
+export const getLeaderboardData = async () => {
+  const res = await axiosInstance.get("/leaderboard/leaderboard-get");
   return res.data;
 };
 

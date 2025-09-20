@@ -106,7 +106,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
-      <Toaster position="top-right" />
+     
       
       {/* Header */}
       <motion.div

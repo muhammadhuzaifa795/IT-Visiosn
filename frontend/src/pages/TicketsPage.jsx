@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router"; // Updated import
 import { LoaderIcon, PlusIcon, TrashIcon } from "lucide-react";
 import useTickets from "../hooks/useTicket";
 import useAuthUser from "../hooks/useAuthUser";
@@ -11,6 +11,8 @@ const TicketsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
+  const [sortOrder, setSortOrder] = useState("newest"); // Newest, oldest
+  const [statusFilter, setStatusFilter] = useState("all"); // all, complete, incomplete
 
   const handleDeleteClick = (ticketId) => {
     setTicketToDelete(ticketId);
@@ -37,11 +39,22 @@ const TicketsPage = () => {
     return <p className="text-center">Failed to load tickets</p>;
   }
 
-  const filteredTickets = tickets.filter(
+  // Filter tickets by search and status
+  let filteredTickets = tickets.filter(
     (ticket) =>
       (ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.description.toLowerCase().includes(search.toLowerCase()))
+        ticket.description.toLowerCase().includes(search.toLowerCase())) &&
+      (statusFilter === "all" ||
+        (statusFilter === "complete" && ticket.status === "complete") ||
+        (statusFilter === "incomplete" && ticket.status !== "complete"))
   );
+
+  // Sort tickets by createdAt
+  filteredTickets = [...filteredTickets].sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+  });
 
   return (
     <div className="min-h-screen py-10 px-4">
@@ -53,22 +66,45 @@ const TicketsPage = () => {
           </Link>
         </div>
 
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <input
             type="text"
             placeholder="Search tickets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input input-bordered w-full max-w-md"
+            aria-label="Search tickets"
           />
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-            className="select select-bordered"
-          >
-            <option value="grid">Grid View</option>
-            <option value="list">List View</option>
-          </select>
+          <div className="flex gap-4">
+            <select
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value)}
+              className="select select-bordered"
+              aria-label="Select view mode"
+            >
+              <option value="grid">Grid View</option>
+              <option value="list">List View</option>
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="select select-bordered"
+              aria-label="Sort tickets"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="select select-bordered"
+              aria-label="Filter by status"
+            >
+              <option value="all">All Tickets</option>
+              <option value="complete">Completed</option>
+              <option value="incomplete">Incomplete</option>
+            </select>
+          </div>
         </div>
 
         <div
@@ -81,6 +117,7 @@ const TicketsPage = () => {
           {filteredTickets.map((ticket) => {
             const isImage = ticket.attachments?.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
             const isVideo = ticket.attachments?.url?.match(/\.(mp4|webm|ogg)$/i);
+            const isCompleted = ticket.status === "complete";
 
             return (
               <Link
@@ -88,8 +125,12 @@ const TicketsPage = () => {
                 key={ticket._id}
                 className={
                   viewMode === "grid"
-                    ? "card shadow-lg rounded-2xl bg-base-100 border hover:shadow-xl transition-all duration-300"
-                    : "card shadow-lg rounded-2xl bg-base-100 border flex flex-row p-4"
+                    ? `card shadow-lg rounded-2xl bg-base-100 border ${
+                        isCompleted ? "border-success bg-success/10" : "border-base-300"
+                      } hover:shadow-xl transition-all duration-300`
+                    : `card shadow-lg rounded-2xl bg-base-100 border ${
+                        isCompleted ? "border-success bg-success/10" : "border-base-300"
+                      } flex flex-row p-4`
                 }
               >
                 {ticket.attachments?.url && (
@@ -103,7 +144,7 @@ const TicketsPage = () => {
                     {isImage && (
                       <img
                         src={ticket.attachments.url}
-                        alt="Attachment"
+                        alt={`Attachment for ticket: ${ticket.title}`}
                         className={
                           viewMode === "grid"
                             ? "w-full h-full object-cover hover:scale-105 transition-transform"
@@ -121,6 +162,7 @@ const TicketsPage = () => {
                         }
                       >
                         <source src={ticket.attachments.url} type="video/mp4" />
+                        Your browser does not support the video tag.
                       </video>
                     )}
                   </figure>
@@ -135,7 +177,7 @@ const TicketsPage = () => {
                   <div>
                     <div className="flex justify-between items-center">
                       <h3 className="card-title text-lg font-semibold">{ticket.title}</h3>
-                      {authUser && ticket.createdBy === authUser._id && (
+                      {authUser && ticket.createdBy?._id === authUser._id && (
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -143,12 +185,25 @@ const TicketsPage = () => {
                           }}
                           disabled={isDeleting}
                           className="btn btn-ghost btn-sm"
+                          aria-label={`Delete ticket: ${ticket.title}`}
                         >
                           <TrashIcon className="w-5 h-5" />
                         </button>
                       )}
                     </div>
                     <p className="text-sm line-clamp-3">{ticket.description}</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-base-content/80">
+                        <span className="font-semibold">Status: </span>
+                        <span className={`badge ${isCompleted ? "badge-success" : "badge-primary"}`}>
+                          {ticket.status}
+                        </span>
+                      </p>
+                      <p className="text-sm text-base-content/80">
+                        <span className="font-semibold">Created By: </span>
+                        {ticket.createdBy?.fullName || "Unknown"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </Link>
