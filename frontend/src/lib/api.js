@@ -207,10 +207,11 @@ export async function getCommentsByPost(postId) {
   return response.data
 }
 
-export async function toggleCommentLike({ postId, commentid }) {
-  const response = await axiosInstance.put(`/comment/like-comment/${postId}/${commentid}`)
-  return response.data
+export async function toggleCommentLike({ postId, commentId }) {
+  const response = await axiosInstance.put(`/comment/like-comment/${postId}/${commentId}`);
+  return response.data;
 }
+
 
 // Roadmap API functions
 export const createRoadmap = async (payload) => {

@@ -67,13 +67,12 @@ export const getCommentsByPost = async (req, res) => {
   }
 };
 
-
 export const toggleCommentLike = async (req, res) => {
-  const { commentid } = req.params;
-  const userId = req.user._id; // Ensure user is authenticated
+ const { postid, commentid } = req.params;
+  const userId = req.user._id;
 
   try {
-    const comment = await Comment.findById(commentid);
+    const comment = await Comment.findById(commentid).populate("user", "fullName skills profilePic");
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
@@ -91,6 +90,7 @@ export const toggleCommentLike = async (req, res) => {
     res.status(200).json({
       message: hasLiked ? "Unliked comment" : "Liked comment",
       likes: comment.likes,
+      user: comment.user,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
