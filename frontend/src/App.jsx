@@ -172,7 +172,7 @@ const App = () => {
 
         <Route
           path="/landing"
-          element={!isAuthenticated ? <LandingPage /> : <Navigate to={"/"} />}
+          element={!isAuthenticated ? <LandingPage /> : <Navigate to={"/landing"} />}
         />
         <Route path="/add-face" element={<AddFacePage />} />
         <Route path="/password-reset" element={<PasswordResetPage />} />

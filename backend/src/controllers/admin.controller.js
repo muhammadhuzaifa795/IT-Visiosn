@@ -1,15 +1,68 @@
 import User from "../models/User.js";
+import Post from "../models/Post.js";
+import RoadMap from "../models/RoadMap.js";
+import CV from "../models/CvGenerator.js";
+import InterviewResult from "../models/InterviewResult.js";
 import bcrypt from "bcryptjs";
+import Ticket from "../models/Ticket.js";
+
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select("-password");
-    res.status(200).json({ users });
+    const users = await User.find({}).select('-password')
+    res.status(200).json({ users })
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ error: 'Internal server error.' })
   }
-};
+}
+
+export const getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.find().populate('author', 'fullName email')
+    res.status(200).json({ posts })
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export const getRoadMaps = async (req, res) => {
+  try {
+    const roadmaps = await RoadMap.find().populate('user', 'fullName email')
+    res.status(200).json({ roadmaps })
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export const getCvs = async (req, res) => {
+  try {
+    const cvs = await CV.find().populate('userId', 'fullName email')
+    res.status(200).json({ cvs })
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export const getInterviews = async (req, res) => {
+  try {
+    const interviews = await InterviewResult.find().populate('interview')
+    res.status(200).json({ interviews })
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export const getTickets = async (req, res) => {
+  try {
+    const tickets = await Ticket.find()
+      .populate('createdBy', 'fullName email')
+      .populate('assignedTo', 'fullName email')
+    res.status(200).json({ tickets })
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

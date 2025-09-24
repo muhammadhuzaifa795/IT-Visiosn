@@ -16,10 +16,10 @@ const RoadmapPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [roadmapToDelete, setRoadmapToDelete] = useState(null)
 
-  // New state for search and filtering
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("newest") // newest, oldest, level
+  const [sortBy, setSortBy] = useState("newest")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [levelFilter, setLevelFilter] = useState("all")
 
   const { createRoadmapMutation, getRoadmapQuery, deleteRoadmapMutation, queryClient } = useRoadMap()
 
@@ -27,16 +27,6 @@ const RoadmapPage = () => {
     return (
       <div className="flex justify-center items-center h-screen bg-base-100">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 mx-auto bg-error/10 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
           <p className="text-error font-medium">Authentication Required</p>
           <p className="text-base-content/60">You need to be logged in to view this page.</p>
         </div>
@@ -47,29 +37,11 @@ const RoadmapPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!goal.trim()) {
-      toast.error("Please enter a valid goal.", {
-        duration: 3000,
-        position: "top-right",
-        style: {
-          background: "hsl(var(--er))",
-          color: "hsl(var(--erc))",
-          borderRadius: "8px",
-          padding: "12px",
-        },
-      })
+      toast.error("Please enter a valid goal.")
       return
     }
     if (!authUser?._id) {
-      toast.error("User authentication failed. Please log in again.", {
-        duration: 3000,
-        position: "top-right",
-        style: {
-          background: "hsl(var(--er))",
-          color: "hsl(var(--erc))",
-          borderRadius: "8px",
-          padding: "12px",
-        },
-      })
+      toast.error("User authentication failed. Please log in again.")
       return
     }
 
@@ -80,39 +52,21 @@ const RoadmapPage = () => {
       },
     }
 
-    console.log("Sending payload:", payload)
     createRoadmapMutation.mutate(payload, {
       onSuccess: (newRoadmap) => {
         setSubmitted(true)
         setGoal("")
-        toast.success("Roadmap created successfully!", {
-          duration: 3000,
-          position: "top-right",
-          style: {
-            background: "hsl(var(--su))",
-            color: "hsl(var(--suc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
-        })
-        // Update the query data immediately to reflect the new roadmap
+        toast.success("Roadmap created successfully!")
         queryClient.setQueryData(["roadmap"], (oldData) => {
+          if (!newRoadmap || !newRoadmap.goal) {
+            return Array.isArray(oldData) ? oldData : []
+          }
           const updatedData = Array.isArray(oldData) ? [...oldData, newRoadmap] : [newRoadmap]
           return updatedData
         })
       },
       onError: (error) => {
-        console.error("Error creating roadmap:", error.response?.data, error.message)
-        toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`, {
-          duration: 3000,
-          position: "top-right",
-          style: {
-            background: "hsl(var(--er))",
-            color: "hsl(var(--erc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
-        })
+        toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`)
       },
     })
   }
@@ -124,39 +78,18 @@ const RoadmapPage = () => {
 
   const confirmDelete = () => {
     if (!roadmapToDelete?._id) return
-
     deleteRoadmapMutation.mutate(roadmapToDelete._id, {
       onSuccess: () => {
-        toast.success("Roadmap deleted successfully!", {
-          duration: 3000,
-          position: "top-right",
-          style: {
-            background: "hsl(var(--su))",
-            color: "hsl(var(--suc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
-        })
-        // Update the query data to remove the deleted roadmap
+        toast.success("Roadmap deleted successfully!")
         queryClient.setQueryData(["roadmap"], (oldData) => {
           if (!Array.isArray(oldData)) return []
-          return oldData.filter((r) => r._id !== roadmapToDelete._id)
+          return oldData.filter((r) => r && r._id !== roadmapToDelete._id)
         })
         setIsDeleteModalOpen(false)
         setRoadmapToDelete(null)
       },
       onError: (error) => {
-        console.error("Error deleting roadmap:", error.response?.data, error.message)
-        toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`, {
-          duration: 3000,
-          position: "top-right",
-          style: {
-            background: "hsl(var(--er))",
-            color: "hsl(var(--erc))",
-            borderRadius: "8px",
-            padding: "12px",
-          },
-        })
+        toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`)
       },
     })
   }
@@ -191,18 +124,23 @@ const RoadmapPage = () => {
     setRoadmapToDelete(null)
   }
 
-  // Filter and sort roadmaps
   const filteredAndSortedRoadmaps = useMemo(() => {
     const roadmaps = Array.isArray(getRoadmapQuery.data) ? getRoadmapQuery.data : []
 
-    // Filter by search query
-    const filtered = roadmaps.filter(
+    let filtered = roadmaps.filter(
       (roadmap) =>
-        roadmap.goal?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        roadmap.level?.toLowerCase().includes(searchQuery.toLowerCase()),
+        roadmap &&
+        typeof roadmap === 'object' &&
+        roadmap.goal &&
+        typeof roadmap.goal === 'string' &&
+        (roadmap.goal.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (roadmap.level && typeof roadmap.level === 'string' && roadmap.level.toLowerCase().includes(searchQuery.toLowerCase()))),
     )
 
-    // Sort roadmaps
+    if (levelFilter !== "all") {
+      filtered = filtered.filter((roadmap) => roadmap.level?.toLowerCase() === levelFilter)
+    }
+
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "oldest":
@@ -217,9 +155,9 @@ const RoadmapPage = () => {
     })
 
     return filtered
-  }, [getRoadmapQuery.data, searchQuery, sortBy])
+  }, [getRoadmapQuery.data, searchQuery, sortBy, levelFilter])
 
-  if (getRoadmapQuery.isLoading) {
+  if (getRoadmapQuery.isLoading || createRoadmapMutation.isPending) {
     return (
       <div className="flex justify-center items-center h-screen bg-base-100">
         <div className="text-center space-y-6">
@@ -228,10 +166,7 @@ const RoadmapPage = () => {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
           />
-          <div className="space-y-2">
-            <p className="text-lg font-medium text-base-content">Loading your roadmaps</p>
-            <p className="text-sm text-base-content/60">Please wait while we fetch your learning journey...</p>
-          </div>
+          <p className="text-lg font-medium text-base-content">Processing your request...</p>
         </div>
       </div>
     )
@@ -241,29 +176,9 @@ const RoadmapPage = () => {
     return (
       <div className="min-h-screen bg-base-100 flex items-center justify-center px-4">
         <div className="text-center space-y-6 max-w-md">
-          <div className="w-20 h-20 mx-auto bg-error/10 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-semibold text-error">Something went wrong</h3>
-            <p className="text-base-content/60">Error fetching roadmaps: {getRoadmapQuery.error.message}</p>
-          </div>
+          <h3 className="text-xl font-semibold text-error">Something went wrong</h3>
+          <p className="text-base-content/60">Error fetching roadmaps: {getRoadmapQuery.error.message}</p>
           <button onClick={() => queryClient.invalidateQueries(["roadmap"])} className="btn btn-primary btn-wide">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
             Try Again
           </button>
         </div>
@@ -271,13 +186,11 @@ const RoadmapPage = () => {
     )
   }
 
-  const roadmaps = Array.isArray(getRoadmapQuery.data) ? getRoadmapQuery.data : []
+  const roadmaps = Array.isArray(getRoadmapQuery.data) ? getRoadmapQuery.data.filter((r) => r && typeof r === 'object' && r.goal) : []
 
   return (
     <div className="min-h-screen bg-base-100">
-      <Toaster position="top-right" />
 
-      {/* Header Section */}
       <div className="bg-gradient-to-br from-base-200/50 to-base-300/30 border-b border-base-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <motion.div
@@ -295,7 +208,6 @@ const RoadmapPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Create Roadmap Form */}
         <motion.div
           className="mb-12"
           initial={{ y: 20, opacity: 0 }}
@@ -368,7 +280,6 @@ const RoadmapPage = () => {
           </div>
         </motion.div>
 
-        {/* Search and Filter Controls */}
         {roadmaps.length > 0 && (
           <motion.div
             className="mb-8"
@@ -377,7 +288,6 @@ const RoadmapPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              {/* Search Bar */}
               <div className="relative flex-1 max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
@@ -415,7 +325,6 @@ const RoadmapPage = () => {
                 )}
               </div>
 
-              {/* Sort Dropdown */}
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-base-content/70 whitespace-nowrap">Sort by:</span>
                 <select
@@ -429,7 +338,6 @@ const RoadmapPage = () => {
                 </select>
               </div>
 
-              {/* Results Count */}
               <div className="text-sm text-base-content/60 whitespace-nowrap">
                 {filteredAndSortedRoadmaps.length} of {roadmaps.length} roadmaps
               </div>
@@ -437,7 +345,6 @@ const RoadmapPage = () => {
           </motion.div>
         )}
 
-        {/* Roadmaps Grid */}
         {filteredAndSortedRoadmaps.length > 0 ? (
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
@@ -456,7 +363,6 @@ const RoadmapPage = () => {
                 transition={{ delay: index * 0.1, duration: 0.5 }}
               >
                 <div className="p-6 space-y-4">
-                  {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1" onClick={() => openModal(roadmap)}>
                       <h3 className="text-xl font-semibold text-base-content group-hover:text-primary transition-colors duration-200">
@@ -487,13 +393,11 @@ const RoadmapPage = () => {
                     </div>
                   </div>
 
-                  {/* Goal */}
                   <div className="space-y-2" onClick={() => openModal(roadmap)}>
                     <p className="text-base-content/70 font-medium">Goal:</p>
                     <p className="text-base-content line-clamp-2">{roadmap.goal}</p>
                   </div>
 
-                  {/* Level Badge */}
                   <div className="flex items-center justify-between" onClick={() => openModal(roadmap)}>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-base-content/70">Level:</span>
@@ -519,7 +423,6 @@ const RoadmapPage = () => {
                     </div>
                   </div>
 
-                  {/* Progress Indicator */}
                   {roadmap.weeks && roadmap.weeks.length > 0 && (
                     <div className="pt-4 border-t border-base-300/50" onClick={() => openModal(roadmap)}>
                       <div className="flex items-center justify-between text-sm">
@@ -533,7 +436,6 @@ const RoadmapPage = () => {
             ))}
           </motion.div>
         ) : roadmaps.length > 0 ? (
-          // No search results
           <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, y: 20 }}
@@ -565,7 +467,6 @@ const RoadmapPage = () => {
             </button>
           </motion.div>
         ) : (
-          // No roadmaps at all
           <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, y: 20 }}
@@ -602,7 +503,6 @@ const RoadmapPage = () => {
         )}
       </div>
 
-      {/* Roadmap Details Modal */}
       <AnimatePresence>
         {isModalOpen && selectedRoadmap && (
           <motion.div
@@ -621,7 +521,6 @@ const RoadmapPage = () => {
               transition={{ duration: 0.3 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
               <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-8 py-6 border-b border-base-300/50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -655,9 +554,7 @@ const RoadmapPage = () => {
                 </div>
               </div>
 
-              {/* Modal Content */}
               <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-8">
-                {/* Goal Section */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-base-content mb-3 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -675,7 +572,6 @@ const RoadmapPage = () => {
                   </div>
                 </div>
 
-                {/* Weekly Plan */}
                 <div>
                   <h3 className="text-lg font-semibold text-base-content mb-6 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -793,7 +689,6 @@ const RoadmapPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {isDeleteModalOpen && roadmapToDelete && (
           <motion.div
@@ -861,11 +756,3 @@ const RoadmapPage = () => {
 }
 
 export default RoadmapPage
-
-
-
-
-
-
-
-

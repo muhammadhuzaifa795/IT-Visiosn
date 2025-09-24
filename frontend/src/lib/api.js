@@ -379,4 +379,32 @@ export const createUser = async (userData) => {
 }
 
 
+// 🔹 Posts
+export const getAllPostsAdmin = async () => {
+  const res = await axiosInstance.get("/admin/posts")
+  return res.data.posts
+}
 
+// 🔹 Roadmaps
+export const getAllRoadmaps = async () => {
+  const res = await axiosInstance.get("/admin/roadmaps")
+  return res.data.roadmaps
+}
+
+// 🔹 CVs
+export const getAllCvs = async () => {
+  const res = await axiosInstance.get("/admin/cvs")
+  return res.data.cvs
+}
+
+// 🔹 Interviews
+export const getAllInterviews = async () => {
+  const res = await axiosInstance.get("/admin/interviews")
+  return res.data.interviews
+}
+
+// 🔹 Tickets
+export const getAllTickets = async () => {
+  const res = await axiosInstance.get("/admin/tickets")
+  return res.data.tickets
+}
