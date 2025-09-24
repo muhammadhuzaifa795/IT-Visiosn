@@ -45,8 +45,8 @@ const TicketsPage = () => {
       (ticket.title.toLowerCase().includes(search.toLowerCase()) ||
         ticket.description.toLowerCase().includes(search.toLowerCase())) &&
       (statusFilter === "all" ||
-        (statusFilter === "complete" && ticket.status === "complete") ||
-        (statusFilter === "incomplete" && ticket.status !== "complete"))
+        (statusFilter === "complete" && ticket.status === "completed") ||
+        (statusFilter === "incomplete" && ticket.status !== "completed"))
   );
 
   // Sort tickets by createdAt

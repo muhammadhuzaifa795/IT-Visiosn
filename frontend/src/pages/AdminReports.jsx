@@ -53,8 +53,8 @@ const AdminReports = () => {
       ((ticket.title || "").toLowerCase().includes(search.toLowerCase()) ||
         (ticket.description || "").toLowerCase().includes(search.toLowerCase())) &&
       (statusFilter === "all" ||
-        (statusFilter === "complete" && ticket.status === "complete") ||
-        (statusFilter === "incomplete" && ticket.status !== "complete"))
+        (statusFilter === "complete" && ticket.status === "completed") ||
+        (statusFilter === "incomplete" && ticket.status !== "completed"))
   )
 
   // Sort tickets by createdAt
@@ -79,7 +79,7 @@ const AdminReports = () => {
 
   return (
     <div className="min-h-screen p-8 bg-base-100">
-      <Toaster position="top-right" />
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Manage Tickets
@@ -135,7 +135,7 @@ const AdminReports = () => {
         </div>
       ) : filteredTickets.length > 0 ? (
         <div className="bg-base-200 shadow rounded-xl overflow-x-auto border border-base-300/30">
-          <table className="table table-auto w-full">
+          <table className="table table-auto w-full min-w-[700px]">
             <thead className="bg-base-300/50">
               <tr>
                 <th className="px-4 py-3 text-left text-base-content/80">Title</th>
@@ -146,22 +146,23 @@ const AdminReports = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTickets.map((ticket) => (
-                <tr key={ticket._id} className="hover:bg-base-300/30 transition-colors duration-200">
-                  <td className="px-4 py-3 text-base-content truncate max-w-xs">{ticket.title || "N/A"}</td>
-                  <td className="px-4 py-3 text-base-content truncate max-w-md">{ticket.description || "No description"}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`badge ${
-                        ticket.status === "complete" ? "badge-success" : "badge-primary"
-                      }`}
-                    >
-                      {ticket.status || "N/A"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-base-content">{ticket.createdBy?.fullName || "Unknown"}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
+              {filteredTickets.map((ticket) => {
+                const shortDesc = ticket.description
+                  ? ticket.description.split(" ").slice(0, 10).join(" ") + (ticket.description.split(" ").length > 10 ? "..." : "")
+                  : "No description"
+                return (
+                  <tr key={ticket._id} className="hover:bg-base-300/30 transition-colors duration-200">
+                    <td className="px-4 py-3 text-base-content font-medium">{ticket.title || "N/A"}</td>
+                    <td className="px-4 py-3 text-base-content">
+                      <span title={ticket.description}>{shortDesc}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`badge ${ticket.status === "complete" ? "badge-success" : "badge-primary"}`}>
+                        {ticket.status || "N/A"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-base-content">{ticket.createdBy?.fullName || "Unknown"}</td>
+                    <td className="px-4 py-3 flex gap-2 flex-wrap">
                       <button
                         onClick={() => handleViewClick(ticket)}
                         className="btn btn-info btn-sm hover:scale-105 transition-transform duration-200"
@@ -176,10 +177,10 @@ const AdminReports = () => {
                         <Trash size={16} />
                         Delete
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -240,9 +241,8 @@ const AdminReports = () => {
               <div>
                 <h4 className="text-sm font-semibold text-base-content/80">Status</h4>
                 <span
-                  className={`badge ${
-                    selectedTicket.status === "complete" ? "badge-success" : "badge-primary"
-                  }`}
+                  className={`badge ${selectedTicket.status === "complete" ? "badge-success" : "badge-primary"
+                    }`}
                 >
                   {selectedTicket.status || "N/A"}
                 </span>

@@ -1,13 +1,10 @@
-
-
 "use client"
 
 import React, { useState } from "react"
 import usePost from "../hooks/usePost"
 import { useNavigate } from "react-router"
 import { toast } from "react-hot-toast"
-import { Loader2, Mic, MicOff, Upload, FileText, ImageIcon, VideoIcon, SparklesIcon } from "lucide-react"
-import useSpeechToText from "../hooks/useSpeechToText"
+import { Loader2, Upload, FileText, ImageIcon, VideoIcon, SparklesIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 const UploadPost = () => {
@@ -17,36 +14,25 @@ const UploadPost = () => {
     attachments: null,
   })
   const [showLoader, setShowLoader] = useState(false)
-  const [activeField, setActiveField] = useState(null) // 'title' or 'description'
   const [dragActive, setDragActive] = useState(false)
 
   const { isPending, postMutation } = usePost()
   const navigate = useNavigate()
 
-
-  const {
-    isListening,
-    transcript,
-    isSupported: speechSupported,
-    startListening,
-    stopListening,
-    resetTranscript,
-  } = useSpeechToText()
-
-  React.useEffect(() => {
-    if (transcript && activeField) {
-      setPostData((prev) => ({
-        ...prev,
-        [activeField]: prev[activeField] + transcript,
-      }))
-      resetTranscript()
-    }
-  }, [transcript, activeField, resetTranscript])
-
   const handleChange = (e) => {
     const { name, value, files } = e.target
     if (name === "attachments") {
-      setPostData({ ...postData, attachments: files[0] })
+      const file = files[0]
+      if (file && file.size > 20 * 1024 * 1024) {
+        toast.error("File size exceeds 20MB limit!", {
+          style: {
+            background: "hsl(var(--er))",
+            color: "hsl(var(--erc))",
+          },
+        })
+        return
+      }
+      setPostData({ ...postData, attachments: file })
     } else {
       setPostData({ ...postData, [name]: value })
     }
@@ -67,29 +53,9 @@ const UploadPost = () => {
     e.stopPropagation()
     setDragActive(false)
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setPostData({ ...postData, attachments: e.dataTransfer.files[0] })
-    }
-  }
-
-  const handleSpeechToggle = (fieldName) => {
-    if (isListening && activeField === fieldName) {
-   
-      stopListening()
-      setActiveField(null)
-      toast.success("Voice recording stopped", {
-        duration: 2000,
-        position: "bottom-center",
-        style: {
-          background: "hsl(var(--b1))",
-          color: "hsl(var(--bc))",
-          border: "1px solid hsl(var(--b3))",
-        },
-      })
-    } else {
-      if (!speechSupported) {
-        toast.error("Speech recognition is not supported in your browser", {
-          duration: 3000,
-          position: "bottom-center",
+      const file = e.dataTransfer.files[0]
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("File size exceeds 20MB limit!", {
           style: {
             background: "hsl(var(--er))",
             color: "hsl(var(--erc))",
@@ -97,33 +63,12 @@ const UploadPost = () => {
         })
         return
       }
-
-      if (isListening) {
-        stopListening()
-      }
-
-      setActiveField(fieldName)
-      startListening()
-      toast.success(`Voice recording started for ${fieldName}`, {
-        duration: 2000,
-        position: "bottom-center",
-        style: {
-          background: "hsl(var(--su))",
-          color: "hsl(var(--suc))",
-        },
-      })
+      setPostData({ ...postData, attachments: file })
     }
   }
 
   const handlePost = (e) => {
     e.preventDefault()
-
- 
-    if (isListening) {
-      stopListening()
-      setActiveField(null)
-    }
-
     setShowLoader(true)
     setTimeout(() => {
       const formData = new FormData()
@@ -173,7 +118,7 @@ const UploadPost = () => {
         },
       })
       setShowLoader(false)
-    }, 5000)
+    }, 3000)
   }
 
   const getFileIcon = (file) => {
@@ -187,192 +132,87 @@ const UploadPost = () => {
   const FileIcon = getFileIcon(postData.attachments)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/30 to-base-100 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/20 to-base-300/10 py-16 px-4 sm:px-6 lg:px-8">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-        className="max-w-2xl mx-auto"
+        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+        className="max-w-3xl mx-auto"
       >
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary/20"
           >
-            <Upload className="w-8 h-8 text-white" />
+            <Upload className="w-10 h-10 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-            Create New Post
+          <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-3">
+            Create a New Post
           </h1>
-          <p className="text-base-content/70">Share your thoughts and ideas with the community</p>
+          <p className="text-lg text-base-content/70 max-w-lg mx-auto">
+            Share your insights, ideas, or questions with the community
+          </p>
         </div>
 
         {/* Main Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="bg-base-100/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-base-300/50"
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="bg-base-100/90 backdrop-blur-2xl rounded-3xl p-10 shadow-2xl border border-base-300/30"
         >
           <form onSubmit={handlePost} className="space-y-8">
             {/* Title Field */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 text-lg font-semibold text-base-content">
-                <FileText className="w-5 h-5 text-primary" />
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 text-xl font-semibold text-base-content">
+                <FileText className="w-6 h-6 text-primary" />
                 Post Title
-                {speechSupported && (
-                  <motion.button
-                    type="button"
-                    onClick={() => handleSpeechToggle("title")}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className={`p-2 rounded-xl transition-all duration-300 ${
-                      isListening && activeField === "title"
-                        ? "bg-error/20 text-error shadow-lg shadow-error/20"
-                        : "bg-primary/10 text-primary hover:bg-primary/20"
-                    }`}
-                    title={isListening && activeField === "title" ? "Stop recording title" : "Record title with voice"}
-                  >
-                    <AnimatePresence mode="wait">
-                      {isListening && activeField === "title" ? (
-                        <motion.div key="mic-off" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <MicOff size={16} className="animate-pulse" />
-                        </motion.div>
-                      ) : (
-                        <motion.div key="mic-on" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Mic size={16} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                )}
               </label>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  name="title"
-                  value={postData.title}
-                  onChange={handleChange}
-                  className={`w-full border-2 rounded-2xl px-6 py-4 bg-base-100/50 backdrop-blur-sm outline-none transition-all duration-300 text-lg ${
-                    isListening && activeField === "title"
-                      ? "border-error shadow-lg shadow-error/20 ring-4 ring-error/10"
-                      : "border-base-300 focus:border-primary focus:shadow-lg focus:shadow-primary/10"
-                  }`}
-                  placeholder={
-                    isListening && activeField === "title" ? "🎤 Listening... speak now" : "Enter an engaging title..."
-                  }
-                  required
-                />
-                <AnimatePresence>
-                  {isListening && activeField === "title" && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                    >
-                      <div className="flex items-center gap-2 text-error text-sm font-medium">
-                        <div className="w-2 h-2 bg-error rounded-full animate-pulse"></div>
-                        Recording
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <input
+                type="text"
+                name="title"
+                value={postData.title}
+                onChange={handleChange}
+                className="w-full border-2 border-base-300 rounded-xl px-5 py-3 bg-base-100/50 backdrop-blur-sm outline-none transition-all duration-300 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 focus:shadow-lg focus:shadow-primary/10 placeholder:text-base-content/40"
+                placeholder="Enter a catchy title..."
+                required
+              />
             </div>
 
             {/* Description Field */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 text-lg font-semibold text-base-content">
-                <FileText className="w-5 h-5 text-secondary" />
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 text-xl font-semibold text-base-content">
+                <FileText className="w-6 h-6 text-secondary" />
                 Description
-                {speechSupported && (
-                  <motion.button
-                    type="button"
-                    onClick={() => handleSpeechToggle("description")}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className={`p-2 rounded-xl transition-all duration-300 ${
-                      isListening && activeField === "description"
-                        ? "bg-error/20 text-error shadow-lg shadow-error/20"
-                        : "bg-secondary/10 text-secondary hover:bg-secondary/20"
-                    }`}
-                    title={
-                      isListening && activeField === "description"
-                        ? "Stop recording description"
-                        : "Record description with voice"
-                    }
-                  >
-                    <AnimatePresence mode="wait">
-                      {isListening && activeField === "description" ? (
-                        <motion.div key="mic-off" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <MicOff size={16} className="animate-pulse" />
-                        </motion.div>
-                      ) : (
-                        <motion.div key="mic-on" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                          <Mic size={16} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                )}
               </label>
-
-              <div className="relative">
-                <textarea
-                  name="description"
-                  value={postData.description}
-                  onChange={handleChange}
-                  rows="6"
-                  className={`w-full border-2 rounded-2xl px-6 py-4 bg-base-100/50 backdrop-blur-sm outline-none resize-none transition-all duration-300 text-base leading-relaxed ${
-                    isListening && activeField === "description"
-                      ? "border-error shadow-lg shadow-error/20 ring-4 ring-error/10"
-                      : "border-base-300 focus:border-secondary focus:shadow-lg focus:shadow-secondary/10"
-                  }`}
-                  placeholder={
-                    isListening && activeField === "description"
-                      ? "🎤 Listening... speak now"
-                      : "Share your thoughts, ideas, or ask questions..."
-                  }
-                  required
-                ></textarea>
-                <AnimatePresence>
-                  {isListening && activeField === "description" && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      className="absolute right-4 top-4"
-                    >
-                      <div className="flex items-center gap-2 text-error text-sm font-medium">
-                        <div className="w-2 h-2 bg-error rounded-full animate-pulse"></div>
-                        Recording
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <textarea
+                name="description"
+                value={postData.description}
+                onChange={handleChange}
+                rows="6"
+                className="w-full border-2 border-base-300 rounded-xl px-5 py-3 bg-base-100/50 backdrop-blur-sm outline-none resize-none transition-all duration-300 text-base leading-relaxed focus:border-secondary focus:ring-2 focus:ring-secondary/20 focus:shadow-lg focus:shadow-secondary/10 placeholder:text-base-content/40"
+                placeholder="Share your thoughts, ideas, or questions..."
+                required
+              />
             </div>
 
             {/* File Upload */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 text-lg font-semibold text-base-content">
-                <Upload className="w-5 h-5 text-accent" />
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 text-xl font-semibold text-base-content">
+                <Upload className="w-6 h-6 text-accent" />
                 Attachment
-                <span className="text-sm font-normal text-base-content/60">(Optional)</span>
+                <span className="text-sm font-normal text-base-content/60">(Optional, max 20MB)</span>
               </label>
-
               <div
-                className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 ${
+                className={`relative border-2 border-dashed rounded-xl p-10 transition-all duration-300 ${
                   dragActive
-                    ? "border-accent bg-accent/10 scale-105"
+                    ? "border-accent bg-accent/20 scale-102"
                     : postData.attachments
                       ? "border-success bg-success/10"
-                      : "border-base-300 hover:border-accent hover:bg-accent/5"
+                      : "border-base-300 hover:border-accent hover:bg-accent/10"
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -384,33 +224,31 @@ const UploadPost = () => {
                   name="attachments"
                   onChange={handleChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  accept="image/*,video/*,.pdf,.doc,.docx"
+                  accept="image/*,video/*"
                 />
-
                 <div className="text-center">
                   <motion.div
                     animate={{ y: dragActive ? -5 : 0 }}
-                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                    className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
                       postData.attachments ? "bg-success/20" : "bg-accent/20"
                     }`}
                   >
-                    <FileIcon className={`w-8 h-8 ${postData.attachments ? "text-success" : "text-accent"}`} />
+                    <FileIcon className={`w-10 h-10 ${postData.attachments ? "text-success" : "text-accent"}`} />
                   </motion.div>
-
                   {postData.attachments ? (
                     <div>
-                      <p className="text-success font-semibold mb-1">File Selected</p>
-                      <p className="text-base-content/70 text-sm">{postData.attachments.name}</p>
-                      <p className="text-base-content/50 text-xs mt-1">
+                      <p className="text-success font-semibold mb-2">File Selected</p>
+                      <p className="text-base-content/80 text-base">{postData.attachments.name}</p>
+                      <p className="text-base-content/50 text-sm mt-2">
                         {(postData.attachments.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-base-content font-semibold mb-2">
+                      <p className="text-base-content font-semibold mb-3">
                         {dragActive ? "Drop your file here" : "Drag & drop or click to upload"}
                       </p>
-                      <p className="text-base-content/60 text-sm">Support for images, videos, and documents</p>
+                      <p className="text-base-content/60 text-sm">Supports images and videos (max 20MB)</p>
                     </div>
                   )}
                 </div>
@@ -421,12 +259,12 @@ const UploadPost = () => {
             <motion.button
               type="submit"
               disabled={isPending || showLoader}
-              whileHover={{ scale: isPending || showLoader ? 1 : 1.02 }}
-              whileTap={{ scale: isPending || showLoader ? 1 : 0.98 }}
-              className={`w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
+              whileHover={{ scale: isPending || showLoader ? 1 : 1.03 }}
+              whileTap={{ scale: isPending || showLoader ? 1 : 0.97 }}
+              className={`w-full py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 isPending || showLoader
                   ? "bg-base-300 text-base-content/50 cursor-not-allowed"
-                  : "bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:shadow-xl hover:shadow-primary/20"
+                  : "bg-gradient-to-r from-primary to-secondary text-white shadow-xl hover:shadow-2xl hover:shadow-primary/30"
               }`}
             >
               <AnimatePresence mode="wait">
@@ -439,10 +277,7 @@ const UploadPost = () => {
                     className="flex items-center justify-center gap-3"
                   >
                     <Loader2 className="animate-spin w-6 h-6" />
-                    <div className="flex items-center gap-2">
-                      <SparklesIcon className="w-5 h-5" />
-                      Generating your description...
-                    </div>
+                    Processing...
                   </motion.div>
                 ) : (
                   <motion.div
@@ -462,16 +297,16 @@ const UploadPost = () => {
 
           {/* AI Notice */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl border border-primary/20"
+            className="mt-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20"
           >
             <div className="flex items-center gap-3">
-              <SparklesIcon className="w-5 h-5 text-primary" />
-              <p className="text-sm text-base-content/80">
+              <SparklesIcon className="w-6 h-6 text-primary" />
+              <p className="text-base text-base-content/80">
                 <span className="font-semibold text-primary">AI Enhancement:</span> Your description may be enhanced
-                with AI to improve clarity and engagement.
+                with AI for better clarity and engagement.
               </p>
             </div>
           </motion.div>

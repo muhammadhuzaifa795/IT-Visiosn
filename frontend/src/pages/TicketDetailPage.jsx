@@ -161,7 +161,7 @@ const TicketDetailPage = () => {
               <div className="flex items-center gap-3">
                 <UserIcon className="w-5 h-5 text-primary" aria-hidden="true" />
                 <div className="group relative">
-                  <span className="font-semibold text-base-content/80">Assigned To: </span>
+                    <h4 className="text-sm font-semibold text-base-content/80">Related Skills Assigned User</h4>
                   {ticket.assignedTo?.length > 0
                     ? ticket.assignedTo
                         .map((u) => (

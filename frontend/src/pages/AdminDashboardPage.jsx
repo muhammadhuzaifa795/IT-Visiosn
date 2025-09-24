@@ -109,7 +109,7 @@ const AdminDashboard = () => {
         data: [
           users.length,
           tickets.length,
-          tickets.filter((t) => t.status === "complete").length,
+          tickets.filter((t) => t.status === "completed").length,
           tickets.filter((t) => t.status !== "complete").length,
         ],
         backgroundColor: ["#10b981", "#3b82f6", "#22c55e", "#ef4444"],

@@ -111,6 +111,10 @@ const HomePage = () => {
     setVisibleCount((prev) => prev + 9);
   };
 
+  const handleShowLess = () => {
+    setVisibleCount(9);
+  };
+
   if (loading || userLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-base-100">
@@ -217,7 +221,7 @@ const HomePage = () => {
 
         {filteredAndSortedPosts.length > 0 ? (
           <motion.div
-            className={`grid ${layout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"} gap-6`}
+            className={`grid ${layout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1"} gap-6`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
@@ -230,7 +234,7 @@ const HomePage = () => {
               return (
                 <motion.div
                   key={post._id}
-                  className="group relative border rounded-xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden bg-base-100 cursor-pointer"
+                  className={`group relative border rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden bg-base-100 cursor-pointer ${layout === "row" ? "flex flex-row" : ""}`}
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
@@ -272,34 +276,40 @@ const HomePage = () => {
                     </div>
                   )}
 
-                  {attachment && isImage && (
-                    <img
-                      src={attachment}
-                      alt="Attachment"
-                      className="rounded-lg mb-3 w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  )}
-                  {attachment && isVideo && (
-                    <video controls className="rounded-lg mb-3 w-full h-80 object-cover">
-                      <source src={attachment} type="video/mp4" />
-                    </video>
+                  {attachment && (
+                    <div className={layout === "row" ? "w-1/3 flex-shrink-0" : "w-full"}>
+                      {isImage && (
+                        <img
+                          src={attachment}
+                          alt="Attachment"
+                          className="rounded-lg w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      )}
+                      {isVideo && (
+                        <video controls className="rounded-lg w-full h-48 object-cover">
+                          <source src={attachment} type="video/mp4" />
+                        </video>
+                      )}
+                    </div>
                   )}
 
-                  <h3 className="text-xl font-semibold mb-1">{post.title}</h3>
-                  <p className="text-sm mb-2 line-clamp-3">{post.description}</p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLike.mutate(post._id);
-                    }}
-                    className="mt-3 text-sm text-pink-400"
-                  >
-                    ❤️ Like ({post.likes?.length || 0})
-                  </button>
+                  <div className={layout === "row" ? "w-2/3 p-4" : "p-4"}>
+                    <h3 className="text-xl font-semibold mb-1">{post.title}</h3>
+                    <p className="text-sm mb-2 line-clamp-3">{post.description}</p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike.mutate(post._id);
+                      }}
+                      className="mt-3 text-sm text-pink-400"
+                    >
+                      ❤️ Like ({post.likes?.length || 0})
+                    </button>
 
-                  <div className="text-xs text-gray-500 flex justify-between items-center mt-3">
-                    <span>Author: {post.author?.fullName || 'Unknown'}</span>
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    <div className="text-xs text-gray-500 flex justify-between items-center mt-3">
+                      <span>Author: {post.author?.fullName || 'Unknown'}</span>
+                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                    </div>
                   </div>
                 </motion.div>
               );
@@ -337,19 +347,29 @@ const HomePage = () => {
           </motion.div>
         )}
 
-        {filteredAndSortedPosts.length > visibleCount && (
+        {filteredAndSortedPosts.length > 9 && (
           <motion.div
-            className="text-center mt-8"
+            className="text-center mt-8 flex gap-4 justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <button
-              onClick={handleShowMore}
-              className="btn btn-primary btn-lg"
-            >
-              Show More
-            </button>
+            {visibleCount < filteredAndSortedPosts.length && (
+              <button
+                onClick={handleShowMore}
+                className="btn btn-primary btn-lg"
+              >
+                Show More
+              </button>
+            )}
+            {visibleCount > 9 && (
+              <button
+                onClick={handleShowLess}
+                className="btn btn-outline btn-lg"
+              >
+                Show Less
+              </button>
+            )}
           </motion.div>
         )}
       </div>
@@ -374,7 +394,7 @@ const HomePage = () => {
             >
               <div className="p-6">
                 <h3 className="font-bold text-lg mb-4">Edit Post</h3>
-                <form onSubmit={handleEditSubmit}>
+                <div>
                   <input
                     type="text"
                     placeholder="Title"
@@ -397,11 +417,11 @@ const HomePage = () => {
                     <button type="button" className="btn" onClick={() => setShowModal(false)}>
                       Cancel
                     </button>
-                    <button type="submit" className="btn btn-error" disabled={editLoading}>
+                    <button type="button" className="btn btn-error" onClick={handleEditSubmit} disabled={editLoading}>
                       {editLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </motion.div>
           </motion.div>

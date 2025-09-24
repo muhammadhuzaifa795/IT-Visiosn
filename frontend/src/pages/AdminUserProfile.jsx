@@ -110,7 +110,7 @@ const AdminUserProfile = () => {
 
   return (
     <div className="min-h-screen p-6 bg-base-100">
-      <Toaster position="top-right" />
+
 
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => navigate("/admin/users")} className="btn btn-ghost btn-circle">
