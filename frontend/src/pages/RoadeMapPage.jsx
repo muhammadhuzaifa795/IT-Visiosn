@@ -66,7 +66,7 @@ const RoadmapPage = () => {
         })
       },
       onError: (error) => {
-        toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`)
+        // toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`)
       },
     })
   }
@@ -89,7 +89,7 @@ const RoadmapPage = () => {
         setRoadmapToDelete(null)
       },
       onError: (error) => {
-        toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`)
+        // toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`)
       },
     })
   }
