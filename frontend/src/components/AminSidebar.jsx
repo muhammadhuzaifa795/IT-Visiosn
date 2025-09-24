@@ -52,8 +52,8 @@ const AdminSidebar = () => {
   const navItems = [
     { to: "/admin/dashboard", label: "Dashboard", icon: HomeIcon, gradient: "from-blue-500/20 to-cyan-500/20" },
     { to: "/admin/users", label: "Manage Users", icon: UsersIcon, gradient: "from-green-500/20 to-emerald-500/20" },
-    { to: "/admin/reports", label: "Reports", icon: BarChart3Icon, gradient: "from-purple-500/20 to-pink-500/20" },
-    { to: "/admin/logs", label: "Activity Logs", icon: ClipboardListIcon, gradient: "from-orange-500/20 to-red-500/20" },
+    { to: "/admin/reports", label: "Manage Tickets", icon: BarChart3Icon, gradient: "from-purple-500/20 to-pink-500/20" },
+    { to: "/admin/logs", label: "Manage Leaderboard", icon: ClipboardListIcon, gradient: "from-orange-500/20 to-red-500/20" },
     { to: "/admin/settings", label: "Settings", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
   ];
 
