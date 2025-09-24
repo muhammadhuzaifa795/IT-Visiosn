@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, Suspense } from "react"
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
-import { useSpring, animated, useTrail } from "@react-spring/web"
+import { useSpring, animated, useTrail } from "@react-spring/web";
+
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, Float, MeshDistortMaterial } from "@react-three/drei"
 import gsap from "gsap"
@@ -42,12 +43,10 @@ import {
   Settings,
 } from "lucide-react"
 
-// Register GSAP plugins
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
-// Three.js Components
 const FloatingGeometry = ({ position, color, geometry = "sphere" }) => {
   const meshRef = useRef()
 
@@ -166,7 +165,6 @@ const LandingPage = () => {
   const parallaxY2 = useTransform(scrollYProgress, [0, 1], ["0%", "-200%"])
   const parallaxY3 = useTransform(scrollYProgress, [0, 1], ["0%", "-300%"])
 
-  // Enhanced scroll behavior
   useEffect(() => {
     const handleScroll = () => {
       const sections = ["hero", "components", "demo", "about", "contact"]
@@ -187,10 +185,8 @@ const LandingPage = () => {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // GSAP Animations with enhanced effects
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Enhanced parallax backgrounds with 3D transforms
       gsap.to(".parallax-bg-1", {
         yPercent: -30,
         rotationX: 5,
@@ -227,7 +223,6 @@ const LandingPage = () => {
         },
       })
 
-      // Enhanced laptop animations
       laptopRefs.current.forEach((laptop, index) => {
         if (laptop) {
           const tl = gsap.timeline({
@@ -263,7 +258,6 @@ const LandingPage = () => {
         }
       })
 
-      // Enhanced icon animations with 3D effects
       iconRefs.current.forEach((icon, index) => {
         if (icon) {
           gsap.fromTo(
@@ -289,7 +283,6 @@ const LandingPage = () => {
             },
           )
 
-          // Continuous floating animation
           gsap.to(icon, {
             y: -10,
             rotation: 10,
@@ -302,7 +295,6 @@ const LandingPage = () => {
         }
       })
 
-      // Text reveal animations
       gsap.utils.toArray(".reveal-text").forEach((text, index) => {
         gsap.fromTo(
           text,
@@ -327,7 +319,6 @@ const LandingPage = () => {
         )
       })
 
-      // Enhanced card animations
       gsap.utils.toArray(".component-card").forEach((card, index) => {
         gsap.fromTo(
           card,
@@ -358,7 +349,6 @@ const LandingPage = () => {
     return () => ctx.revert()
   }, [])
 
-  // ScrollReveal for additional animations
   useEffect(() => {
     if (typeof window !== "undefined") {
       ScrollReveal().reveal(".sr-reveal", {
@@ -383,7 +373,7 @@ const LandingPage = () => {
       gradient: "from-emerald-400 to-cyan-400",
       features: ["Personalized Learning Paths", "Progress Tracking", "Community Insights"],
       demoCode: `const roadmap = {\n  frontend: ['HTML', 'CSS', 'JavaScript'],\n  backend: ['Node.js', 'Express', 'MongoDB'],\n  progress: 75\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/roadmap.jpg",
     },
     {
       id: "cv-generator",
@@ -394,7 +384,7 @@ const LandingPage = () => {
       gradient: "from-amber-400 to-orange-400",
       features: ["ATS-Friendly Templates", "AI Content Suggestions", "Real-time Preview"],
       demoCode: `const generateCV = async (data) => {\n  const template = await AI.optimize(data)\n  return template.render()\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/cv-generator.jpg",
     },
     {
       id: "mock-interview",
@@ -405,7 +395,7 @@ const LandingPage = () => {
       gradient: "from-violet-400 to-purple-400",
       features: ["Real-time Feedback", "Industry-specific Questions", "Performance Analytics"],
       demoCode: `const interview = {\n  question: "Explain React hooks",\n  answer: userResponse,\n  feedback: AI.analyze(userResponse)\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/mock-interview.jpg",
     },
     {
       id: "problem-solving",
@@ -416,7 +406,7 @@ const LandingPage = () => {
       gradient: "from-emerald-400 to-teal-400",
       features: ["Multiple Difficulty Levels", "Detailed Explanations", "Code Playground"],
       demoCode: `function twoSum(nums, target) {\n  const map = new Map()\n  for (let i = 0; i < nums.length; i++) {\n    // Solution logic here\n  }\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/problem-solving.jpg",
     },
     {
       id: "posts",
@@ -427,7 +417,7 @@ const LandingPage = () => {
       gradient: "from-amber-400 to-yellow-400",
       features: ["Rich Text Editor", "Code Snippets", "Community Voting"],
       demoCode: `const post = {\n  title: "React Best Practices",\n  content: markdown,\n  tags: ['react', 'javascript'],\n  votes: 42\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/community-posts.jpg",
     },
     {
       id: "face-auth",
@@ -438,7 +428,7 @@ const LandingPage = () => {
       gradient: "from-violet-400 to-indigo-400",
       features: ["Biometric Security", "Instant Access", "Privacy Protected"],
       demoCode: `const faceAuth = async (image) => {\n  const features = await extractFeatures(image)\n  return await verifyIdentity(features)\n}`,
-      videoUrl: "/placeholder.svg?height=400&width=600",
+      imageUrl: "/images/face-auth.jpg",
     },
   ]
 
@@ -477,7 +467,6 @@ const LandingPage = () => {
 
   return (
     <>
-      {/* Enhanced Styles */}
       <style jsx>{`
         html {
           scroll-behavior: ${isScrollMode ? "auto" : "smooth"};
@@ -489,7 +478,6 @@ const LandingPage = () => {
           overflow-x: hidden;
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
           width: 12px;
         }
@@ -509,7 +497,6 @@ const LandingPage = () => {
           background: linear-gradient(45deg, hsl(var(--pf)), hsl(var(--sf)));
         }
 
-        /* 3D Effects */
         .preserve-3d {
           transform-style: preserve-3d;
         }
@@ -522,7 +509,6 @@ const LandingPage = () => {
           perspective: 2000px;
         }
 
-        /* Enhanced Laptop Animations */
         .laptop-container {
           transform-style: preserve-3d;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -547,7 +533,6 @@ const LandingPage = () => {
           transition: all 0.3s ease;
         }
 
-        /* Enhanced Code Animations */
         .code-block {
           background: linear-gradient(135deg, #1f2937, #111827);
           border-radius: 12px;
@@ -594,7 +579,6 @@ const LandingPage = () => {
           50% { border-color: #10b981; }
         }
 
-        /* Enhanced Card Effects */
         .component-card {
           transform-style: preserve-3d;
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -623,7 +607,6 @@ const LandingPage = () => {
           box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
         }
 
-        /* Floating Animations */
         .floating-element {
           animation: float 6s ease-in-out infinite;
         }
@@ -643,7 +626,6 @@ const LandingPage = () => {
           75% { transform: translateY(-15px) rotate(3deg); }
         }
 
-        /* Glass Morphism */
         .glass {
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(20px);
@@ -651,7 +633,6 @@ const LandingPage = () => {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        /* Neon Effects */
         .neon-glow {
           text-shadow: 
             0 0 5px currentColor,
@@ -660,13 +641,11 @@ const LandingPage = () => {
             0 0 40px currentColor;
         }
 
-        /* Enhanced Mobile Menu */
         .mobile-menu {
           backdrop-filter: blur(20px);
           background: rgba(0, 0, 0, 0.9);
         }
 
-        /* Scroll Indicator */
         .scroll-indicator {
           position: fixed;
           top: 0;
@@ -678,7 +657,6 @@ const LandingPage = () => {
           z-index: 1000;
         }
 
-        /* Enhanced Hover Effects */
         .hover-lift {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -688,7 +666,6 @@ const LandingPage = () => {
           box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
         }
 
-        /* Video Modal Enhancements */
         .video-modal {
           backdrop-filter: blur(20px);
           background: rgba(0, 0, 0, 0.8);
@@ -701,7 +678,6 @@ const LandingPage = () => {
           box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
         }
 
-        /* Stagger Animations */
         .stagger-item {
           opacity: 0;
           transform: translateY(30px) rotateX(-15deg);
@@ -722,7 +698,6 @@ const LandingPage = () => {
           }
         }
 
-        /* Loading States */
         .loading-shimmer {
           background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
           background-size: 200% 100%;
@@ -740,13 +715,11 @@ const LandingPage = () => {
         data-theme="forest"
         ref={containerRef}
       >
-        {/* Enhanced Scroll Progress Bar */}
         <motion.div
           className="scroll-indicator fixed top-0 left-0 right-0 h-1 z-50 origin-left"
           style={{ scaleX: scrollYProgress }}
         />
 
-        {/* Enhanced Navigation */}
         <motion.nav
           className="fixed top-0 w-full z-40 glass border-b border-primary/20"
           initial={{ y: -100 }}
@@ -764,7 +737,6 @@ const LandingPage = () => {
                 </span>
               </motion.div>
 
-              {/* Desktop Navigation */}
               <div className="hidden md:flex items-center gap-6">
                 {[
                   { id: "hero", label: "Home", icon: Home },
@@ -790,7 +762,6 @@ const LandingPage = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                {/* Mode Toggle */}
                 <div className="tabs tabs-boxed bg-base-200/50 backdrop-blur-sm">
                   <button className={`tab ${isScrollMode ? "tab-active" : ""}`} onClick={() => setIsScrollMode(true)}>
                     Scroll Mode
@@ -800,7 +771,6 @@ const LandingPage = () => {
                   </button>
                 </div>
 
-                {/* Mobile Menu Button */}
                 <button
                   className="md:hidden btn btn-ghost btn-circle"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -819,7 +789,6 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Mobile Menu */}
           <AnimatePresence>
             {isMobileMenuOpen && (
               <motion.div
@@ -851,20 +820,17 @@ const LandingPage = () => {
           </AnimatePresence>
         </motion.nav>
 
-        {/* Enhanced Hero Section with 3D Elements */}
         <section
           id="hero"
           className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20"
           ref={heroRef}
         >
-          {/* 3D Background Scene */}
           <div className="absolute inset-0 opacity-30">
             <Suspense fallback={<div className="loading-shimmer w-full h-full" />}>
               <Scene3D />
             </Suspense>
           </div>
 
-          {/* Enhanced Parallax Background Layers */}
           <motion.div className="absolute inset-0 parallax-bg-1" style={{ y }}>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10">
               <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fillRule=%22evenodd%22%3E%3Cg fill=%22%23000%22 fillOpacity=%220.05%22%3E%3Ccircle cx=%227%22 cy=%227%22 r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] bg-repeat opacity-30"></div>
@@ -879,7 +845,6 @@ const LandingPage = () => {
             <div className="absolute inset-0 bg-gradient-to-bl from-secondary/5 via-accent/5 to-primary/5 opacity-30"></div>
           </motion.div>
 
-          {/* Floating Elements */}
           {[Database, Globe, Shield, Monitor, Cpu, Code, Brain, Target].map((Icon, index) => (
             <motion.div
               key={index}
@@ -947,7 +912,7 @@ const LandingPage = () => {
 
                 <motion.button
                   className="btn btn-outline btn-lg text-lg px-8"
-                  onClick={() => openVideoModal("/placeholder.svg?height=600&width=800")}
+                  onClick={() => openVideoModal("/videos/demo.mp4")}
                   whileHover={{ scale: 1.05, borderColor: "hsl(var(--s))", y: -5 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -956,7 +921,6 @@ const LandingPage = () => {
                 </motion.button>
               </motion.div>
 
-              {/* Enhanced Scroll Indicator */}
               <motion.div
                 className="flex flex-col items-center gap-2 text-base-content/50"
                 animate={{ y: [0, 10, 0] }}
@@ -969,7 +933,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Enhanced Components Showcase */}
         <section id="components" className="py-20 bg-base-100 relative">
           <div className="container mx-auto px-4 relative z-10">
             <motion.div
@@ -993,7 +956,7 @@ const LandingPage = () => {
                 return (
                   <animated.div key={component.id} style={style}>
                     <InteractiveCard3D index={index}>
-                      <ComponentCard component={component} index={index} onVideoClick={openVideoModal} />
+                      <ComponentCard component={component} index={index} />
                     </InteractiveCard3D>
                   </animated.div>
                 )
@@ -1002,7 +965,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Enhanced Interactive Demo Section */}
         <section id="demo" className="py-20 bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden">
           <div className="container mx-auto px-4">
             <motion.div
@@ -1018,14 +980,13 @@ const LandingPage = () => {
               </p>
             </motion.div>
 
-            {/* Enhanced Laptops with 3D Effects */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
               {components.slice(0, 3).map((component, index) => (
                 <motion.div
                   key={component.id}
                   ref={(el) => (laptopRefs.current[index] = el)}
                   className="laptop-container perspective-1000 cursor-pointer"
-                  onClick={() => openVideoModal(component.videoUrl)}
+                  onClick={() => openVideoModal("/videos/demo.mp4")}
                   whileHover={{ scale: 1.05, rotateY: 5 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -1057,7 +1018,6 @@ const LandingPage = () => {
               ))}
             </div>
 
-            {/* Main Demo Video */}
             <motion.div
               className="max-w-4xl mx-auto"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -1068,7 +1028,7 @@ const LandingPage = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-base-100 border border-primary/20 hover-lift">
                 <div
                   className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center cursor-pointer"
-                  onClick={() => openVideoModal("/placeholder.svg?height=600&width=800")}
+                  onClick={() => openVideoModal("/videos/demo.mp4")}
                 >
                   <motion.div className="text-center space-y-6" whileHover={{ scale: 1.05 }}>
                     <motion.button
@@ -1089,7 +1049,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Enhanced About Section */}
         <section id="about" className="py-20 bg-base-100 relative overflow-hidden">
           <div className="container mx-auto px-4">
             <motion.div
@@ -1219,7 +1178,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Enhanced Contact Section */}
         <section id="contact" className="py-20 bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden">
           <div className="container mx-auto px-4">
             <motion.div
@@ -1373,7 +1331,6 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Enhanced CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 relative overflow-hidden">
           <div className="absolute inset-0">
             {[Code, Database, Globe, Shield, Monitor, Cpu, Brain, Target].map((Icon, index) => (
@@ -1416,7 +1373,7 @@ const LandingPage = () => {
                   whileTap={{ scale: 0.95 }}
                 >
                   <Target className="size-5" />
-                  Start Free Trial
+                  Get Started
                 </motion.button>
                 <motion.button
                   className="btn btn-outline btn-lg text-lg px-8"
@@ -1428,14 +1385,13 @@ const LandingPage = () => {
                   whileTap={{ scale: 0.95 }}
                 >
                   <BookOpen className="size-5" />
-                  View Documentation
+                  Login
                 </motion.button>
               </div>
             </motion.div>
           </div>
         </section>
 
-        {/* Enhanced Video Modal */}
         <AnimatePresence>
           {isVideoModalOpen && (
             <motion.div
@@ -1461,27 +1417,12 @@ const LandingPage = () => {
                 </button>
 
                 <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg overflow-hidden">
-                  <img
-                    src={isVideoModalOpen || "/placeholder.svg"}
-                    alt="Demo Video"
+                  <video
+                    src={isVideoModalOpen}
+                    controls
+                    autoPlay
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <motion.div
-                      className="text-center space-y-4"
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
-                        <Play className="size-8 text-base-100" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Demo Video</h3>
-                        <p className="text-white/80">Experience the full power of CodeZynx platform</p>
-                      </div>
-                    </motion.div>
-                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -1492,8 +1433,7 @@ const LandingPage = () => {
   )
 }
 
-// Enhanced Component Card with 3D Effects
-const ComponentCard = ({ component, index, onVideoClick }) => {
+const ComponentCard = ({ component, index }) => {
   const [isHovered, setIsHovered] = useState(false)
   const cardRef = useRef(null)
   const iconRef = useRef(null)
@@ -1513,7 +1453,6 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
 
   useEffect(() => {
     if (cardRef.current && iconRef.current) {
-      // Enhanced card flip animation
       gsap.fromTo(
         cardRef.current,
         { rotationY: -90, opacity: 0, z: -100 },
@@ -1532,7 +1471,6 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
         },
       )
 
-      // Enhanced icon animation
       gsap.fromTo(
         iconRef.current,
         { scale: 0, rotation: -180, opacity: 0 },
@@ -1561,12 +1499,10 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Gradient Overlay */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${component.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
       ></div>
 
-      {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center gap-4 mb-4">
           <animated.div
@@ -1581,7 +1517,6 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
 
         <p className="text-base-content/70 mb-6 leading-relaxed">{component.description}</p>
 
-        {/* Features */}
         <div className="space-y-2 mb-6">
           {component.features.map((feature, idx) => (
             <motion.div
@@ -1597,7 +1532,14 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
           ))}
         </div>
 
-        {/* Code Preview */}
+        <div className="mb-4">
+          <img
+            src={component.imageUrl}
+            alt={component.title}
+            className="w-full h-48 object-cover rounded-lg"
+          />
+        </div>
+
         <div className="code-block bg-base-200 rounded-lg p-3 mb-4 font-mono text-xs overflow-hidden">
           {component.demoCode.split("\n").map((line, lineIndex) => (
             <div key={lineIndex} className="code-line text-base-content/70 mb-1 whitespace-nowrap overflow-hidden">
@@ -1606,28 +1548,8 @@ const ComponentCard = ({ component, index, onVideoClick }) => {
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <motion.button
-            className={`btn btn-${component.color} btn-sm flex-1`}
-            onClick={() => onVideoClick(component.videoUrl)}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Play className="size-4" />
-            Watch Demo
-          </motion.button>
-          <motion.button
-            className="btn btn-outline btn-sm"
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ArrowRight className="size-4" />
-          </motion.button>
-        </div>
       </div>
 
-      {/* Floating Particles */}
       {[...Array(3)].map((_, particleIndex) => (
         <motion.div
           key={particleIndex}
