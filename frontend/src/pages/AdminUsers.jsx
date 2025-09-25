@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
-import { Plus, Eye } from "lucide-react"
+import { Plus, Eye, Ban, UserCheck } from "lucide-react"
 import { useNavigate } from "react-router"
-import { getAllUsers, deleteUserById, createUser } from "../lib/api"
+import { getAllUsers, deleteUserById, createUser, toggleBanUser } from "../lib/api"
+import { useMutation } from "@tanstack/react-query"
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([])
@@ -19,6 +20,17 @@ const AdminUsers = () => {
   })
 
   const navigate = useNavigate()
+
+  const { mutate: banMutation, isPending: isBanPending } = useMutation({
+    mutationFn: toggleBanUser,
+    onSuccess: (data) => {
+      toast.success(data.message)
+      setUsers(users.map((user) => user._id === data.user._id ? data.user : user))
+    },
+    onError: () => {
+      toast.error("Failed to update user ban status")
+    }
+  })
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -60,6 +72,16 @@ const AdminUsers = () => {
     navigate(`/admin/user/${userId}`)
   }
 
+  const handleToggleBan = (userId, isBanned) => {
+    if (!isBanned) {
+      const reason = prompt("Enter reason for banning this user:")
+      if (!reason) return toast.error("Ban reason is required")
+      banMutation({ userId, isBanned: true, reason })
+    } else {
+      banMutation({ userId, isBanned: false })
+    }
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNewUser({ ...newUser, [name]: value })
@@ -79,7 +101,7 @@ const AdminUsers = () => {
       toast.success("User created successfully!")
       setShowAddUserForm(false)
       setNewUser({
-        fullname: "",
+        fullName: "",
         email: "",
         phone: "",
         password: "",
@@ -94,13 +116,13 @@ const AdminUsers = () => {
 
   return (
     <div className="min-h-screen p-6 bg-base-100">
-      <Toaster position="top-right" />
+      {/* <Toaster position="top-right" /> */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Users</h1>
-        <button onClick={() => setShowAddUserForm(!showAddUserForm)} className="btn btn-primary">
+        {/* <button onClick={() => setShowAddUserForm(!showAddUserForm)} className="btn btn-primary">
           <Plus size={20} />
           Add New User
-        </button>
+        </button> */}
       </div>
 
       {showAddUserForm && (
@@ -113,8 +135,8 @@ const AdminUsers = () => {
               </label>
               <input
                 type="text"
-                name="fullname"
-                value={newUser.fullname}
+                name="fullName"
+                value={newUser.fullName}
                 onChange={handleInputChange}
                 className="input input-bordered w-full"
                 required
@@ -198,6 +220,7 @@ const AdminUsers = () => {
                 <th className="px-4 py-2 text-left">Email</th>
                 <th className="px-4 py-2 text-left">Phone</th>
                 <th className="px-4 py-2 text-left">Role</th>
+                <th className="px-4 py-2 text-left">Status</th>
                 <th className="px-4 py-2 text-left">Actions</th>
               </tr>
             </thead>
@@ -205,7 +228,7 @@ const AdminUsers = () => {
               {users.length > 0 ? (
                 users.map((user) => (
                   <tr key={user._id} className="hover:bg-base-200">
-                    <td className="px-4 py-2">{user.fullname}</td>
+                    <td className="px-4 py-2">{user.fullName}</td>
                     <td className="px-4 py-2">{user.email}</td>
                     <td className="px-4 py-2 text-left">{user.phone || "N/A"}</td>
                     <td className="px-4 py-2">
@@ -214,10 +237,23 @@ const AdminUsers = () => {
                       </span>
                     </td>
                     <td className="px-4 py-2">
+                      <span className={`badge ${user.isBanned ? "badge-error" : "badge-black"}`}>
+                        {user.isBanned ? "Banned" : "Active"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">
                       <div className="flex gap-2">
-                        <button onClick={() => handleViewProfile(user._id)} className="btn btn-info btn-sm">
+                        <button onClick={() => handleViewProfile(user._id)} className="btn btn-sm">
                           <Eye size={16} />
                           View Profile
+                        </button>
+                        <button 
+                          onClick={() => handleToggleBan(user._id, user.isBanned)} 
+                          className={`btn btn-sm ${user.isBanned ? "btn-success" : "btn-error"}`} 
+                          disabled={isBanPending}
+                        >
+                          {user.isBanned ? <UserCheck size={16} /> : <Ban size={16} />}
+                          {user.isBanned ? "Unban" : "Ban"}
                         </button>
                         <button onClick={() => handleDelete(user._id)} className="btn btn-error btn-sm">
                           Delete
@@ -228,7 +264,7 @@ const AdminUsers = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-4 py-6 text-center text-base-content/60">
+                  <td colSpan="6" className="px-4 py-6 text-center text-base-content/60">
                     No users found.
                   </td>
                 </tr>

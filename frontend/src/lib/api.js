@@ -403,8 +403,51 @@ export const getAllInterviews = async () => {
   return res.data.interviews
 }
 
-// 🔹 Tickets
+
 export const getAllTickets = async () => {
   const res = await axiosInstance.get("/admin/tickets")
   return res.data.tickets
 }
+
+
+// create contact
+export const createContact = async (data) => {
+  const res = await axiosInstance.post("/contact", data);
+  return res.data;
+};
+
+// admin contacts
+export const getAdminContacts = async () => {
+  const res = await axiosInstance.get("/contact/get-contacts");
+  return res.data.data;
+};
+
+// update contact status
+export const updateContactStatus = async ({ id, status }) => {
+  const res = await axiosInstance.put(`/contact/${id}/status`, { status });
+  return res.data;
+};
+
+// user contacts
+export const getUserContacts = async (userId) => {
+  const res = await axiosInstance.get(`/contact/user/contacts/${userId}`);
+  return res.data.data;
+};
+
+// delete contact
+export const deleteContact = async (id) => {
+  const res = await axiosInstance.delete(`/contact/${id}`);
+  return res.data;
+};
+
+
+export const toggleBanUser = async ({ userId, isBanned, reason }) => {
+  const res = await axiosInstance.put(`/users/ban-user/${userId}`, { isBanned, reason });
+  return res.data;
+};
+
+// Get banned users (for admin)
+export const getBannedUsers = async () => {
+  const res = await axiosInstance.get("/users/banned-users");
+  return res.data.bannedUsers;
+};

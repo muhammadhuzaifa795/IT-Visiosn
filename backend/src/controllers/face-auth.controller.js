@@ -55,18 +55,30 @@ export async function addFace(req, res) {
 
 export async function loginWithFace(req, res) {
   try {
-    if (!req.file) return res.status(400).json({ success: false, message: "No image" });
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No image" });
+    }
 
     const img = await bufferToCvImage(req.file.buffer);
-    const d = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-    if (!d) return res.status(400).json({ success: false, message: "No face" });
+    const d = await faceapi
+      .detectSingleFace(img)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!d) {
+      return res.status(400).json({ success: false, message: "No face" });
+    }
 
     const users = await User.find();
-    let best = null, min = 0.6;
+    let best = null,
+      min = 0.6;
 
     for (const u of users) {
       for (const f of u.faces) {
-        const dist = faceapi.euclideanDistance(d.descriptor, new Float32Array(f.descriptor));
+        const dist = faceapi.euclideanDistance(
+          d.descriptor,
+          new Float32Array(f.descriptor)
+        );
         if (dist < min) {
           min = dist;
           best = u;
@@ -74,9 +86,23 @@ export async function loginWithFace(req, res) {
       }
     }
 
-    if (!best) return res.status(400).json({ success: false, message: "No match" });
+    if (!best) {
+      return res.status(400).json({ success: false, message: "No match" });
+    }
 
-    const token = jwt.sign({ userId: best._id }, process.env.JWT_SECRET_KEY, { expiresIn: "7d" });
+    // ✅ Ban/Unban check
+    if (best.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: `Your account is banned. Reason: ${best.banReason || "No reason provided"}`,
+      });
+    }
+
+    const token = jwt.sign(
+      { userId: best._id },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
 
     res.cookie("jwt", token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -86,9 +112,11 @@ export async function loginWithFace(req, res) {
     });
 
     const user = await User.findById(best._id).select("-password");
+
     res.json({ success: true, user });
   } catch (e) {
-    res.status(500).json({ success: false });
+    console.error("Login with face error:", e);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 

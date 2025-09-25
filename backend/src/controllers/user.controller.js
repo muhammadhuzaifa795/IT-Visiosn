@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { sendBanStatusEmail } from "../lib/bannedEmail.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -149,3 +150,41 @@ export async function getOutgoingFriendReqs(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+
+
+export const toggleBanUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isBanned, reason } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.isBanned = isBanned;
+    user.banReason = isBanned ? reason : "";
+    await user.save();
+
+    // Email bhejna
+    await sendBanStatusEmail(user.email, isBanned, reason);
+
+    res.json({
+      message: `User ${isBanned ? "banned" : "unbanned"} successfully`,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+// Admin ke liye banned users list
+export const getBannedUsers = async (req, res) => {
+  try {
+    const bannedUsers = await User.find({ isBanned: true });
+    res.json({ bannedUsers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch banned users" });
+  }
+};

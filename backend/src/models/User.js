@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-     faces: [
+    faces: [
       {
         descriptor: [Number],
         cloudinaryUrl: String,
@@ -77,8 +77,10 @@ const userSchema = new mongoose.Schema(
     },
     skills: [{
       type: String,
-      default: ""
+      default: []
     }],
+    isBanned: { type: Boolean, default: false },
+    banReason: { type: String, default: "" },
     otp: {
       type: String,
     },

@@ -10,6 +10,8 @@ import {
   MenuIcon,
   ChevronLeftIcon,
   XIcon,
+  Contact2,
+  Contact2Icon,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,7 +56,7 @@ const AdminSidebar = () => {
     { to: "/admin/users", label: "Manage Users", icon: UsersIcon, gradient: "from-green-500/20 to-emerald-500/20" },
     { to: "/admin/reports", label: "Manage Tickets", icon: BarChart3Icon, gradient: "from-purple-500/20 to-pink-500/20" },
     { to: "/admin/logs", label: "Manage Leaderboard", icon: ClipboardListIcon, gradient: "from-orange-500/20 to-red-500/20" },
-    { to: "/admin/settings", label: "Settings", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
+    { to: "/admin/contacts", label: "Contacts", icon: Contact2Icon, gradient: "from-gray-500/20 to-slate-500/20" },
   ];
 
   const sidebarVariants = {

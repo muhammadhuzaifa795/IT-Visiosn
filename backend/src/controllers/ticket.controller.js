@@ -24,7 +24,6 @@ export const createTicket = async (req, res) => {
       title,
       description,
       createdBy: req.user._id.toString(),
-      status: "pending",
       attachments,
     });
 

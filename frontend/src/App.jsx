@@ -28,6 +28,7 @@ import UploadTicket from "./pages/UploadTicket.jsx";
 import TicketsPage from "./pages/TicketsPage.jsx";
 import TicketDetailPage from "./pages/TicketDetailPage.jsx";
 import RoadmapPage from "./pages/RoadeMapPage.jsx";
+import UserContacts from "./pages/ContactPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
@@ -36,6 +37,7 @@ import Help from "./pages/Help.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AdminRoute from "./AdminRoute";
 import AdminUsers from "./pages/AdminUsers";
+import AdminContacts from "./pages/AdminContact.jsx";
 
 // New Interview Pages
 import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
@@ -131,6 +133,16 @@ const App = () => {
             <AdminRoute>
               <Layoutadmin showSidebar={true}>
                 <AdminActivityLogs />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/contacts"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminContacts />
               </Layoutadmin>
             </AdminRoute>
           }
@@ -516,6 +528,19 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="/contacts"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <UserContacts userId={authUser._id} />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
       </Routes>
       <Toaster />
       <Jarvis />
