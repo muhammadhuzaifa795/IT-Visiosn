@@ -45,23 +45,29 @@ export const onTicketCreated = inngest.createFunction(
           helpfulNotes: response.helpfulNotes || "No additional notes provided.",
           status: "IN_PROGRESS",
           relatedSkills: Array.isArray(response.relatedSkills)
-            ? response.relatedSkills
+            ? response.relatedSkills.filter((s) => typeof s === "string")
             : [],
         });
 
-        return response;
+        return {
+          summary: response.summary || "No summary available",
+          helpfulNotes: response.helpfulNotes || "No notes available",
+          relatedSkills: Array.isArray(response.relatedSkills)
+            ? response.relatedSkills.filter((s) => typeof s === "string")
+            : [],
+        };
       });
 
       const assignedUsers = await step.run("assign-users", async () => {
-        const skills = Array.isArray(aiResponse.relatedSkills)
-          ? aiResponse.relatedSkills.map((skill) => skill.trim().toLowerCase()).filter(Boolean)
-          : [];
+        const skills = aiResponse.relatedSkills
+          .map((skill) => skill.trim().toLowerCase())
+          .filter(Boolean);
 
         let users = [];
         if (skills.length > 0) {
           users = await User.find({
             role: "user",
-            skills: { $in: skills.map(skill => new RegExp(`^${skill}$`, "i")) },
+            skills: { $in: skills },
             _id: { $ne: ticket.createdBy },
           });
         }
@@ -76,28 +82,25 @@ export const onTicketCreated = inngest.createFunction(
       await step.run("send-email-notification", async () => {
         if (assignedUsers.length > 0) {
           const finalTicket = await Ticket.findById(ticket._id);
-
           for (const user of assignedUsers) {
             await transporter.sendMail({
               from: `"Your App" <${process.env.SMTP_USER}>`,
               to: user.email,
               subject: "New Ticket Assigned",
               html: `
-    <div style="font-family: Arial, sans-serif; padding: 20px;">
-      <h2>New Ticket Assigned</h2>
-      <p>You have been assigned a new ticket:</p>
-      <p style="font-size: 18px; font-weight: bold;">
-        ${finalTicket.title}
-      </p>
-      <p><strong>Summary:</strong> ${aiResponse.summary || "No summary available"}</p>
-      <p><strong>Notes:</strong> ${aiResponse.helpfulNotes}</p>
-      <p>
-        <a href="http://localhost:5173/ticket/${ticket._id}" style="color: #ffffff; background-color: #1d4ed8; padding: 8px 12px; text-decoration: none; border-radius: 4px;">
-          View Ticket Details
-        </a>
-      </p>
-    </div>
-  `,
+<div style="font-family: Arial, sans-serif; padding: 20px;">
+  <h2>New Ticket Assigned</h2>
+  <p>You have been assigned a new ticket:</p>
+  <p style="font-size: 18px; font-weight: bold;">${finalTicket.title}</p>
+  <p><strong>Summary:</strong> ${aiResponse.summary}</p>
+  <p><strong>Notes:</strong> ${aiResponse.helpfulNotes}</p>
+  <p>
+    <a href="http://localhost:5173/ticket/${ticket._id}" style="color: #ffffff; background-color: #1d4ed8; padding: 8px 12px; text-decoration: none; border-radius: 4px;">
+      View Ticket Details
+    </a>
+  </p>
+</div>
+`,
             });
           }
         }
@@ -115,7 +118,10 @@ export const onTicketCreated = inngest.createFunction(
 
 export async function findTicketsAssignedToUser(userId) {
   try {
-    const tickets = await Ticket.find({ assignedTo: userId }).populate("assignedTo", "email fullName profilePic");
+    const tickets = await Ticket.find({ assignedTo: userId }).populate(
+      "assignedTo",
+      "email fullName profilePic"
+    );
     return tickets;
   } catch (err) {
     throw new Error(`Error fetching tickets: ${err.message}`);
