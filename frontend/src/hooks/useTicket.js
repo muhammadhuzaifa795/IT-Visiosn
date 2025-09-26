@@ -31,12 +31,27 @@ const useTickets = () => {
     },
   });
 
-  const useTicketById = (id) =>
-    useQuery({
-      queryKey: ["ticket", id],
-      queryFn: () => getTicketById(id),
-      enabled: !!id,
-    });
+
+ const useTicketById = (id) =>
+  useQuery({
+    queryKey: ["ticket", id],
+    queryFn: async () => {
+      const ticket = await getTicketById(id);
+
+      // Clean helpfulNotes
+      if (ticket?.helpfulNotes) {
+        ticket.helpfulNotes = ticket.helpfulNotes
+          .replace(/(\*\*|\/\/|\/\*|\*\/)/g, "") // bold markers, comments
+          .replace(/<[^>]*>/g, "") // HTML tags remove
+          .replace(/\p{Emoji}/gu, "") // emojis remove
+          .replace(/\s+/g, " ") // multiple spaces → single
+          .trim();
+      }
+
+      return ticket;
+    },
+    enabled: !!id,
+  });
 
   return {
     tickets: data?.tickets || [],

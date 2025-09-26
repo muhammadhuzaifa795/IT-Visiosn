@@ -51,7 +51,7 @@ export async function signup(req, res) {
 
     const newUser = await User.create({
       email,
-      fullname: fullName,
+      fullName: fullName,
       password: hashedPassword,
       phone,
       profilePic: avatarUrl,
@@ -140,29 +140,36 @@ export function logout(req, res) {
   res.status(200).json({ success: true, message: "Logout successful" });
 }
 
-// ONBOARD
+
 export async function onboard(req, res) {
   try {
     const userId = req.user._id;
 
-    const { fullName, bio, nativeLanguage, location } = req.body;
+    const { fullName, bio, language, location, profilePic, skills } = req.body;
 
-    if (!fullName || !bio || !nativeLanguage || !location) {
+    // Validate required fields
+    if (!fullName || !bio || !language || !location) {
       return res.status(400).json({
         message: "All fields are required",
         missingFields: [
           !fullName && "fullName",
           !bio && "bio",
-          !nativeLanguage && "nativeLanguage",
+          !language && "language",
           !location && "location",
         ].filter(Boolean),
       });
     }
 
+    // Update user
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        ...req.body,
+        fullName,
+        bio,
+        language,
+        location,
+        profilePic: profilePic || "", // fallback to empty string
+        skills: Array.isArray(skills) ? skills : [], // ensure array
         isOnboarded: true,
       },
       { new: true }
@@ -171,6 +178,7 @@ export async function onboard(req, res) {
     if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
 
+    // Optional: update Stream user for chat/video integration
     try {
       await upsertStreamUser({
         id: updatedUser._id.toString(),
@@ -193,7 +201,6 @@ export async function onboard(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
-
 // UPDATE PROFILE
 export async function updateProfile(req, res) {
   const userId = req.user.id;
@@ -204,7 +211,7 @@ export async function updateProfile(req, res) {
       email,
       bio,
       profilePic,
-      nativeLanguage,
+      language,
       location,
       dateOfBirth,
       phone,
@@ -218,7 +225,7 @@ export async function updateProfile(req, res) {
         ...(email && { email }),
         ...(bio && { bio }),
         ...(profilePic !== "" && { profilePic }),
-        ...(nativeLanguage && { nativeLanguage }),
+        ...(language && { language }),
         ...(location && { location }),
         ...(dateOfBirth && { dateOfBirth }),
         ...(phone && { phone }),
@@ -271,21 +278,27 @@ export const resendOtp = async (req, res) => {
   if (!email) return res.status(400).json({ message: "Email is required" });
 
   try {
-    let user = await User.findOne({ email });
+    // DB me user check karo
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      // User nahi mila
+      return res.status(404).json({ message: "User not found with this email" });
     }
 
     // Agar fullname missing hai, fallback assign kar do
-    if (!user.fullname) user.fullname = "User";
+    if (!user.fullName) user.fullName = "User";
 
+    // OTP generate karo
     const otp = generateOTP();
     user.otp = otp;
-    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
+
+    // Save changes
     await user.save();
 
-    await sendOtpEmail(user.email, otp, user.fullname);
+    // Email bhejo
+    await sendOtpEmail(user.email, otp, user.fullName);
 
     return res.status(200).json({ message: "OTP resent successfully" });
   } catch (err) {
@@ -296,6 +309,7 @@ export const resendOtp = async (req, res) => {
     });
   }
 };
+
 
 export const verifyOTPHandler = async (req, res) => {
   const { phone, email, otp } = req.body;
@@ -317,23 +331,14 @@ export const verifyOTPHandler = async (req, res) => {
   }
 };
 
-
 export const resetPassword = async (req, res) => {
   const { phone, email, newPassword } = req.body;
 
   try {
-    // Find user by phone or email
     const user = await User.findOne({ $or: [{ phone }, { email }] });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Hash the new password
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Assign hashed password and save
-    user.password = hashedPassword;
+    user.password = newPassword; // <-- plain password, pre-save will hash it
     await user.save();
 
     res.status(200).json({ message: "Password changed successfully" });

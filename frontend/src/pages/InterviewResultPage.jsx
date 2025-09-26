@@ -1,7 +1,31 @@
 "use client"
 
 import { useParams, useNavigate } from "react-router"
-import  {useGetResults} from "../hooks/useInterview"
+import { useGetResults } from "../hooks/useInterview"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  TrendingUpIcon,
+  TargetIcon,
+  StarIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  LightbulbIcon,
+  ThumbsUpIcon,
+  ZapIcon,
+  AwardIcon,
+  DownloadIcon,
+  PrinterIcon,
+  RotateCcwIcon,
+  MessageSquareIcon,
+  FileTextIcon,
+  CalendarIcon,
+  UserIcon,
+  BrainIcon,
+  ChartBarIcon,
+  TrophyIcon,
+  SparklesIcon
+} from "lucide-react"
 
 const InterviewResultPage = () => {
   const { id } = useParams()
@@ -10,10 +34,25 @@ const InterviewResultPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg"></span>
-          <p className="mt-4">Loading your results...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-base-200">
+        <div className="text-center space-y-6">
+          <motion.div
+            animate={{ 
+              rotate: 360,
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ 
+              rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+              scale: { duration: 1.5, repeat: Infinity }
+            }}
+            className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto"
+          >
+            <BrainIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <div>
+            <h2 className="text-2xl font-bold text-base-content mb-2">Analyzing Your Results</h2>
+            <p className="text-base-content/60">We're carefully reviewing your interview performance...</p>
+          </div>
         </div>
       </div>
     )
@@ -21,22 +60,38 @@ const InterviewResultPage = () => {
 
   if (error || !results?.data) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <div className="text-6xl mb-4">❌</div>
-            <h2 className="text-2xl font-bold mb-4">Results Not Found</h2>
+      <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card bg-base-100 shadow-2xl max-w-md w-full"
+        >
+          <div className="card-body text-center p-8">
+            <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircleIcon className="w-8 h-8 text-error" />
+            </div>
+            <h2 className="text-2xl font-bold text-base-content mb-2">Results Not Found</h2>
             <p className="text-base-content/70 mb-6">
-              We couldn't find the results for this interview.
+              We couldn't find the results for this interview. It may have expired or been deleted.
             </p>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => navigate('/create-interview')}
-            >
-              Start New Interview
-            </button>
+            <div className="space-y-3">
+              <button 
+                className="btn btn-primary w-full gap-2"
+                onClick={() => navigate('/create-interview')}
+              >
+                <ZapIcon className="w-4 h-4" />
+                Start New Interview
+              </button>
+              <button 
+                className="btn btn-ghost w-full gap-2"
+                onClick={() => navigate('/interviews')}
+              >
+                <RotateCcwIcon className="w-4 h-4" />
+                Back to Interviews
+              </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -53,181 +108,353 @@ const InterviewResultPage = () => {
     return 'text-error'
   }
 
+  const getScoreBadgeColor = (score) => {
+    if (score >= 8) return 'badge-success'
+    if (score >= 6) return 'badge-warning'
+    return 'badge-error'
+  }
+
   const getPerformanceLevel = (percentage) => {
-    if (percentage >= 80) return { level: 'Excellent', color: 'badge-success', emoji: '🏆' }
-    if (percentage >= 60) return { level: 'Good', color: 'badge-warning', emoji: '👍' }
-    if (percentage >= 40) return { level: 'Fair', color: 'badge-warning', emoji: '📈' }
-    return { level: 'Needs Improvement', color: 'badge-error', emoji: '📚' }
+    if (percentage >= 90) return { 
+      level: 'Exceptional', 
+      color: 'badge-success', 
+      emoji: '🏆',
+      description: 'Outstanding performance! You demonstrate excellent skills.',
+      icon: TrophyIcon
+    }
+    if (percentage >= 80) return { 
+      level: 'Excellent', 
+      color: 'badge-success', 
+      emoji: '⭐',
+      description: 'Great job! Your skills are well above average.',
+      icon: StarIcon
+    }
+    if (percentage >= 70) return { 
+      level: 'Good', 
+      color: 'badge-warning', 
+      emoji: '👍',
+      description: 'Solid performance with room for growth.',
+      icon: ThumbsUpIcon
+    }
+    if (percentage >= 60) return { 
+      level: 'Satisfactory', 
+      color: 'badge-warning', 
+      emoji: '📈',
+      description: 'Good foundation, focus on areas for improvement.',
+      icon: TrendingUpIcon
+    }
+    return { 
+      level: 'Needs Practice', 
+      color: 'badge-error', 
+      emoji: '📚',
+      description: 'Keep practicing to improve your skills.',
+      icon: LightbulbIcon
+    }
   }
 
   const performance = getPerformanceLevel(percentage)
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2">📊 Interview Results</h1>
-        <p className="text-base-content/70">Here's how you performed in your interview</p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <div className="text-3xl mb-2">📝</div>
-            <div className="stat-title">Topic</div>
-            <div className="stat-value text-lg">{interview.topic}</div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <div className="text-3xl mb-2">🎯</div>
-            <div className="stat-title">Level</div>
-            <div className="stat-value text-lg capitalize">{interview.level}</div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <div className="text-3xl mb-2">📊</div>
-            <div className="stat-title">Average Score</div>
-            <div className={`stat-value text-2xl ${getScoreColor(averageScore)}`}>
-              {averageScore}/10
+    <div className="min-h-screen bg-base-200">
+      {/* Header Section */}
+      <div className="bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 border-b border-base-300/30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-6 py-3 mb-6">
+              <ChartBarIcon className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">Interview Results</span>
             </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body text-center">
-            <div className="text-3xl mb-2">{performance.emoji}</div>
-            <div className="stat-title">Performance</div>
-            <div className={`badge ${performance.color} badge-lg`}>
-              {performance.level}
-            </div>
-          </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-base-content mb-4">
+              Interview Performance Analysis
+            </h1>
+            <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+              Detailed breakdown of your interview performance with actionable insights
+            </p>
+          </motion.div>
         </div>
       </div>
 
-      {/* Overall Performance */}
-      <div className="card bg-base-100 shadow-xl mb-8">
-        <div className="card-body">
-          <h2 className="card-title text-2xl mb-4">🎯 Overall Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span>Overall Score</span>
-                <span className="font-bold">{percentage}%</span>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Summary Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          <div className="card bg-base-100 shadow-lg border border-base-300/30">
+            <div className="card-body text-center p-6">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <FileTextIcon className="w-6 h-6 text-primary" />
               </div>
-              <progress 
-                className="progress progress-primary w-full" 
-                value={percentage} 
-                max="100"
-              ></progress>
+              <div className="stat-title text-base-content/70">Topic</div>
+              <div className="stat-value text-lg font-semibold text-base-content">{interview.topic}</div>
             </div>
-            <div className="stats">
-              <div className="stat">
-                <div className="stat-title">Questions Answered</div>
-                <div className="stat-value text-lg">{totalQuestions}</div>
+          </div>
+
+          <div className="card bg-base-100 shadow-lg border border-base-300/30">
+            <div className="card-body text-center p-6">
+              <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <TargetIcon className="w-6 h-6 text-secondary" />
+              </div>
+              <div className="stat-title text-base-content/70">Difficulty</div>
+              <div className="stat-value text-lg font-semibold text-base-content capitalize">{interview.level}</div>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-lg border border-base-300/30">
+            <div className="card-body text-center p-6">
+              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <StarIcon className="w-6 h-6 text-warning" />
+              </div>
+              <div className="stat-title text-base-content/70">Average Score</div>
+              <div className={`stat-value text-xl font-bold ${getScoreColor(averageScore)}`}>
+                {averageScore}/10
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Detailed Results */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">📋 Detailed Feedback</h2>
-        
-        {answers.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body text-center">
-              <div className="text-6xl mb-4">🤔</div>
-              <h3 className="text-xl font-bold mb-2">No Answers Recorded</h3>
-              <p className="text-base-content/70">
-                It looks like no answers were recorded for this interview.
-              </p>
+          <div className="card bg-base-100 shadow-lg border border-base-300/30">
+            <div className="card-body text-center p-6">
+              <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <performance.icon className="w-6 h-6 text-success" />
+              </div>
+              <div className="stat-title text-base-content/70">Performance</div>
+              <div className={`badge ${performance.color} badge-lg font-semibold`}>
+                {performance.level}
+              </div>
             </div>
           </div>
-        ) : (
-          answers.map((answer, index) => (
-            <div key={index} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold">Question {index + 1}</h3>
-                  <div className={`badge badge-lg ${getScoreColor(answer.score || 0)}`}>
-                    {answer.score || 0}/10
+        </motion.div>
+
+        {/* Performance Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card bg-base-100 shadow-lg border border-base-300/30 mb-8"
+        >
+          <div className="card-body p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <TrendingUpIcon className="w-6 h-6 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-base-content">Performance Overview</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Progress Section */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-semibold text-base-content">Overall Score</span>
+                    <span className="font-bold text-lg text-primary">{percentage}%</span>
+                  </div>
+                  <div className="w-full bg-base-300/30 rounded-full h-4">
+                    <motion.div 
+                      className="bg-gradient-to-r from-primary to-secondary h-4 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percentage}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {/* Question */}
-                  <div>
-                    <h4 className="font-semibold text-primary mb-2">❓ Question:</h4>
-                    <div className="bg-base-200 p-4 rounded-lg">
-                      {answer.question}
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-base-200/50 rounded-xl">
+                    <div className="text-2xl font-bold text-primary">{totalQuestions}</div>
+                    <div className="text-sm text-base-content/70">Questions</div>
                   </div>
-
-                  {/* Answer */}
-                  <div>
-                    <h4 className="font-semibold text-secondary mb-2">💬 Your Answer:</h4>
-                    <div className="bg-base-200 p-4 rounded-lg">
-                      {answer.answer}
-                    </div>
+                  <div className="text-center p-4 bg-base-200/50 rounded-xl">
+                    <div className="text-2xl font-bold text-secondary">{totalScore}</div>
+                    <div className="text-sm text-base-content/70">Total Points</div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Feedback */}
-                  {answer.feedback && (
-                    <div>
-                      <h4 className="font-semibold text-info mb-2">🤖 AI Feedback:</h4>
-                      <div className="bg-info/10 p-4 rounded-lg border border-info/20">
-                        {answer.feedback}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Strengths and Improvements */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {answer.strengths && (
-                      <div>
-                        <h4 className="font-semibold text-success mb-2">✅ Strengths:</h4>
-                        <div className="bg-success/10 p-4 rounded-lg border border-success/20">
-                          {answer.strengths}
-                        </div>
-                      </div>
-                    )}
-
-                    {answer.improvements && (
-                      <div>
-                        <h4 className="font-semibold text-warning mb-2">📈 Areas for Improvement:</h4>
-                        <div className="bg-warning/10 p-4 rounded-lg border border-warning/20">
-                          {answer.improvements}
-                        </div>
-                      </div>
-                    )}
+              {/* Performance Insights */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <SparklesIcon className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-base-content mb-1">Performance Insight</h4>
+                    <p className="text-base-content/70 text-sm">{performance.description}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <ClockIcon className="w-5 h-5 text-warning mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-base-content mb-1">Completion Time</h4>
+                    <p className="text-base-content/70 text-sm">Interview completed recently</p>
                   </div>
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          </div>
+        </motion.div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-center gap-4 mt-8">
-        <button 
-          className="btn btn-primary btn-lg" 
-          onClick={() => navigate('/create-interview')}
+        {/* Detailed Results */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="space-y-6"
         >
-          🚀 Start New Interview
-        </button>
-        <button 
-          className="btn btn-outline btn-lg" 
-          onClick={() => window.print()}
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-info/10 rounded-lg">
+              <MessageSquareIcon className="w-6 h-6 text-info" />
+            </div>
+            <h2 className="text-2xl font-bold text-base-content">Detailed Question Analysis</h2>
+          </div>
+
+          <AnimatePresence>
+            {answers.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="card bg-base-100 shadow-lg border border-base-300/30"
+              >
+                <div className="card-body text-center p-8">
+                  <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircleIcon className="w-8 h-8 text-base-content/40" />
+                  </div>
+                  <h3 className="text-xl font-bold text-base-content mb-2">No Answers Recorded</h3>
+                  <p className="text-base-content/70">
+                    It looks like no answers were recorded for this interview session.
+                  </p>
+                </div>
+              </motion.div>
+            ) : (
+              answers.map((answer, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="card bg-base-100 shadow-lg border border-base-300/30 hover:shadow-xl transition-shadow duration-300"
+                >
+                  <div className="card-body p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="font-bold text-primary">{index + 1}</span>
+                        </div>
+                        <h3 className="text-xl font-semibold text-base-content">Question {index + 1}</h3>
+                      </div>
+                      <div className={`badge ${getScoreBadgeColor(answer.score || 0)} badge-lg gap-2`}>
+                        <StarIcon className="w-4 h-4" />
+                        {answer.score || 0}/10
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Question */}
+                      <div>
+                        <h4 className="font-semibold text-base-content mb-3 flex items-center gap-2">
+                          <FileTextIcon className="w-4 h-4 text-primary" />
+                          Question
+                        </h4>
+                        <div className="bg-base-200/50 p-4 rounded-xl border-l-4 border-primary">
+                          <p className="text-base-content leading-relaxed">{answer.question}</p>
+                        </div>
+                      </div>
+
+                      {/* Answer */}
+                      <div>
+                        <h4 className="font-semibold text-base-content mb-3 flex items-center gap-2">
+                          <UserIcon className="w-4 h-4 text-secondary" />
+                          Your Answer
+                        </h4>
+                        <div className="bg-base-200/50 p-4 rounded-xl border-l-4 border-secondary">
+                          <p className="text-base-content leading-relaxed">{answer.answer}</p>
+                        </div>
+                      </div>
+
+                      {/* Feedback Sections */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* AI Feedback */}
+                        {answer.feedback && (
+                          <div>
+                            <h4 className="font-semibold text-base-content mb-3 flex items-center gap-2">
+                              <BrainIcon className="w-4 h-4 text-info" />
+                              AI Feedback
+                            </h4>
+                            <div className="bg-info/5 p-4 rounded-xl border border-info/20">
+                              <p className="text-base-content leading-relaxed">{answer.feedback}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Strengths & Improvements */}
+                        <div className="space-y-4">
+                          {answer.strengths && (
+                            <div>
+                              <h4 className="font-semibold text-base-content mb-2 flex items-center gap-2">
+                                <CheckCircleIcon className="w-4 h-4 text-success" />
+                                Strengths
+                              </h4>
+                              <div className="bg-success/5 p-3 rounded-lg border border-success/20">
+                                <p className="text-base-content/80 text-sm">{answer.strengths}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {answer.improvements && (
+                            <div>
+                              <h4 className="font-semibold text-base-content mb-2 flex items-center gap-2">
+                                <LightbulbIcon className="w-4 h-4 text-warning" />
+                                Areas for Improvement
+                              </h4>
+                              <div className="bg-warning/5 p-3 rounded-lg border border-warning/20">
+                                <p className="text-base-content/80 text-sm">{answer.improvements}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
         >
-          🖨️ Print Results
-        </button>
+          <button 
+            className="btn btn-primary btn-lg gap-3 shadow-lg"
+            onClick={() => navigate('/create-interview')}
+          >
+            <ZapIcon className="w-5 h-5" />
+            Start New Interview
+          </button>
+          <button 
+            className="btn btn-outline btn-lg gap-3"
+            onClick={() => window.print()}
+          >
+            <PrinterIcon className="w-5 h-5" />
+            Print Results
+          </button>
+          <button 
+            className="btn btn-ghost btn-lg gap-3"
+            onClick={() => navigate('/interviews')}
+          >
+            <RotateCcwIcon className="w-5 h-5" />
+            Back to Interviews
+          </button>
+        </motion.div>
       </div>
     </div>
   )

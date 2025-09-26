@@ -2,13 +2,35 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { getAllPosts, updatePost, deletePost } from '../lib/api';
-import { FiMoreVertical, FiEdit, FiTrash2, FiGrid, FiList } from 'react-icons/fi';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import useAuthUser from '../hooks/useAuthUser';
 import { useTogglePostLike } from "../hooks/usePostActions";
-import { LoaderIcon } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  SearchIcon,
+  GridIcon,
+  ListIcon,
+  MoreVerticalIcon,
+  EditIcon,
+  Trash2Icon,
+  HeartIcon,
+  HeartMinusIcon,
+  EyeIcon,
+  MessageCircleIcon,
+  CalendarIcon,
+  UserIcon,
+  ImageIcon,
+  VideoIcon,
+  FileIcon,
+  PlusIcon,
+  FilterIcon,
+  SortAscIcon,
+  LoaderIcon,
+  XIcon,
+  ShareIcon,
+  BookmarkIcon
+} from 'lucide-react';
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -23,8 +45,10 @@ const HomePage = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(9);
+  const [visibleCount, setVisibleCount] = useState(12);
   const [layout, setLayout] = useState("grid");
+  const [sortBy, setSortBy] = useState("newest");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const navigate = useNavigate();
   const { isLoading: userLoading, authUser } = useAuthUser();
   const toggleLike = useTogglePostLike();
@@ -64,7 +88,7 @@ const HomePage = () => {
 
     try {
       await updatePost(activePost._id, formData);
-      toast.success('Post updated!');
+      toast.success('Post updated successfully!');
       setShowModal(false);
       fetchPosts();
     } catch (error) {
@@ -80,7 +104,7 @@ const HomePage = () => {
     setDeleteLoading(true);
     try {
       await deletePost(activePost._id);
-      toast.success('Post deleted!');
+      toast.success('Post deleted successfully!');
       setPosts(posts.filter((p) => p._id !== activePost._id));
       setShowConfirm(false);
     } catch (err) {
@@ -102,53 +126,84 @@ const HomePage = () => {
         (post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (post.description && typeof post.description === 'string' && post.description.toLowerCase().includes(searchQuery.toLowerCase())))
     );
+
+    // Sort posts
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "popular":
+          return (b.likes?.length || 0) - (a.likes?.length || 0);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case "newest":
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+
     return filtered;
-  }, [posts, searchQuery]);
+  }, [posts, searchQuery, sortBy]);
 
   const visiblePosts = filteredAndSortedPosts.slice(0, visibleCount);
 
   const handleShowMore = () => {
-    setVisibleCount((prev) => prev + 9);
+    setVisibleCount((prev) => prev + 12);
   };
 
   const handleShowLess = () => {
-    setVisibleCount(9);
+    setVisibleCount(12);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getFileTypeIcon = (url) => {
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return ImageIcon;
+    if (url.match(/\.(mp4|webm|ogg)$/i)) return VideoIcon;
+    return FileIcon;
   };
 
   if (loading || userLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-base-100">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-base-200">
         <div className="text-center space-y-6">
           <motion.div
-            className="w-16 h-16 mx-auto border-4 border-primary/20 border-t-primary rounded-full"
+            className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full mx-auto"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
           />
-          <p className="text-lg font-medium text-base-content">Loading posts...</p>
+          <div>
+            <p className="text-lg font-medium text-base-content mb-2">Loading Community Posts</p>
+            <p className="text-base-content/60">Discovering amazing content from our community...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-base-100">
-      <div className="bg-gradient-to-br from-base-200/50 to-base-300/30 border-b border-base-300">
+    <div className="min-h-screen bg-base-200">
+      {/* Header Section */}
+      <div className="bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 border-b border-base-300/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <motion.div
-            className="text-center space-y-4"
+            className="text-center space-y-6"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-base-content">Community Posts</h1>
-            <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-              Explore and share knowledge with the community
+            <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-6 py-3 mb-4">
+              <MessageCircleIcon className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-primary">Community Feed</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-base-content">Explore Community Posts</h1>
+            <p className="text-lg text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+              Discover, share, and engage with amazing content from our vibrant community
             </p>
           </motion.div>
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Controls Section */}
         {posts.length > 0 && (
           <motion.div
             className="mb-8"
@@ -156,23 +211,10 @@ const HomePage = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+              {/* Search */}
               <div className="relative flex-1 max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className={`w-5 h-5 transition-colors duration-200 ${isSearchFocused ? "text-primary" : "text-base-content/40"}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
+                <SearchIcon className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-200 ${isSearchFocused ? "text-primary" : "text-base-content/40"}`} />
                 <input
                   type="text"
                   value={searchQuery}
@@ -180,141 +222,220 @@ const HomePage = () => {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
                   placeholder="Search posts by title or description..."
-                  className="input input-bordered w-full pl-12 pr-4 h-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200 bg-base-100/80 backdrop-blur-sm border-base-300/50 placeholder-base-content/40"
+                  className="input input-bordered w-full pl-12 pr-10 h-12 rounded-xl border-base-300/50 bg-base-100 focus:bg-base-50 transition-all duration-200 placeholder-base-content/40"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-base-content/40 hover:text-base-content transition-colors duration-200"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-base-content/40 hover:text-base-content transition-colors duration-200"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <XIcon className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
+              {/* Controls */}
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-base-content/70 whitespace-nowrap">Layout:</span>
-                <button
-                  onClick={() => setLayout(layout === "grid" ? "row" : "grid")}
-                  className="btn btn-sm btn-ghost flex items-center gap-2"
-                >
-                  {layout === "grid" ? (
-                    <>
-                      <FiList className="w-5 h-5" /> Row
-                    </>
-                  ) : (
-                    <>
-                      <FiGrid className="w-5 h-5" /> Grid
-                    </>
-                  )}
-                </button>
+                <div className="dropdown dropdown-end">
+                  <label tabIndex={0} className="btn btn-outline h-12 gap-2">
+                    <SortAscIcon className="w-4 h-4" />
+                    Sort
+                  </label>
+                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-48 z-10">
+                    <li><button onClick={() => setSortBy("newest")} className={sortBy === "newest" ? "active" : ""}>Newest First</button></li>
+                    <li><button onClick={() => setSortBy("oldest")} className={sortBy === "oldest" ? "active" : ""}>Oldest First</button></li>
+                    <li><button onClick={() => setSortBy("popular")} className={sortBy === "popular" ? "active" : ""}>Most Popular</button></li>
+                  </ul>
+                </div>
+
+                <div className="join">
+                  <button
+                    onClick={() => setLayout("grid")}
+                    className={`join-item btn ${layout === "grid" ? "btn-active" : ""}`}
+                  >
+                    <GridIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setLayout("list")}
+                    className={`join-item btn ${layout === "list" ? "btn-active" : ""}`}
+                  >
+                    <ListIcon className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <div className="text-sm text-base-content/60 whitespace-nowrap">
+              <div className="text-sm text-base-content/60 bg-base-200/50 rounded-full px-4 py-2">
                 {filteredAndSortedPosts.length} of {posts.length} posts
               </div>
             </div>
           </motion.div>
         )}
 
+        {/* Posts Grid/List */}
         {filteredAndSortedPosts.length > 0 ? (
-          <motion.div
-            className={`grid ${layout === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1"} gap-6`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            {visiblePosts.map((post, index) => {
-              const attachment = post.attachments?.url || '';
-              const isVideo = attachment.match(/\.(mp4|webm|ogg)$/i);
-              const isImage = attachment.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+          <>
+            <motion.div
+              className={`gap-6 ${layout === "grid" ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "flex flex-col"}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              {visiblePosts.map((post, index) => {
+                const attachment = post.attachments?.url || '';
+                const isVideo = attachment.match(/\.(mp4|webm|ogg)$/i);
+                const isImage = attachment.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const FileTypeIcon = getFileTypeIcon(attachment);
+                const isLiked = post.likes?.includes(authUser?._id);
+                const isAuthor = authUser?._id === post.author?._id;
 
-              return (
-                <motion.div
-                  key={post._id}
-                  className={`group relative border rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden bg-base-100 cursor-pointer ${layout === "row" ? "flex flex-row" : ""}`}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                  onClick={() => navigate(`/posts/${post._id}`)}
-                >
-                  {authUser?._id === post.author?._id && (
-                    <div
-                      className="absolute top-3 right-3 dropdown dropdown-end z-10"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div tabIndex={0} role="button" className="btn btn-sm btn-ghost">
-                        <FiMoreVertical className="text-lg" />
+                return (
+                  <motion.div
+                    key={post._id}
+                    className="group bg-base-100 rounded-2xl shadow-lg hover:shadow-2xl border border-base-300/30 hover:border-primary/20 transition-all duration-300 overflow-hidden cursor-pointer"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.1, duration: 0.5 }}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    onClick={() => navigate(`/posts/${post._id}`)}
+                  >
+                    {/* Post Header */}
+                    <div className="relative">
+                      {attachment && (
+                        <div className={`relative overflow-hidden ${layout === "list" ? "w-48 flex-shrink-0 h-full" : "w-full h-48"}`}>
+                          {isImage ? (
+                            <img
+                              src={attachment}
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : isVideo ? (
+                            <div className="w-full h-full bg-base-300 flex items-center justify-center">
+                              <VideoIcon className="w-12 h-12 text-base-content/40" />
+                            </div>
+                          ) : (
+                            <div className="w-full h-full bg-base-300 flex items-center justify-center">
+                              <FileTypeIcon className="w-12 h-12 text-base-content/40" />
+                            </div>
+                          )}
+                          <div className="absolute top-3 left-3">
+                            <div className="badge badge-primary badge-sm">
+                              <FileTypeIcon className="w-3 h-3 mr-1" />
+                              {isImage ? 'Image' : isVideo ? 'Video' : 'File'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Author Actions */}
+                      {isAuthor && (
+                        <div className="absolute top-3 right-3 dropdown dropdown-end z-10" onClick={(e) => e.stopPropagation()}>
+                          <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVerticalIcon className="w-4 h-4" />
+                          </label>
+                          <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-36 z-20">
+                            <li>
+                              <button onClick={() => handleEdit(post)} className="flex items-center gap-2">
+                                <EditIcon className="w-4 h-4" />
+                                Edit Post
+                              </button>
+                            </li>
+                            <li>
+                              <button onClick={() => { setActivePost(post); setShowConfirm(true); }} className="text-error flex items-center gap-2">
+                                <Trash2Icon className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Post Content */}
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold text-base-content mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                        {post.title}
+                      </h3>
+                      
+                      <p className="text-base-content/70 mb-4 line-clamp-3 leading-relaxed">
+                        {post.description}
+                      </p>
+
+                      {/* Post Stats */}
+                      <div className="flex items-center justify-between text-sm text-base-content/60 mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1">
+                            <UserIcon className="w-4 h-4" />
+                            <span>{post.author?.fullName || 'Unknown'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <CalendarIcon className="w-4 h-4" />
+                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-200 rounded-box w-36">
-                        <li
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-base-300/30">
+                        <button
                           onClick={(e) => {
-                            e.preventDefault();
                             e.stopPropagation();
-                            handleEdit(post);
+                            toggleLike.mutate(post._id);
                           }}
+                          className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
                         >
-                          <span className="flex items-center gap-2 text-sm cursor-pointer">
-                            <FiEdit /> Edit
-                          </span>
-                        </li>
-                        <li
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setActivePost(post);
-                            setShowConfirm(true);
-                          }}
-                        >
-                          <span className="flex items-center gap-2 text-sm cursor-pointer">
-                            <FiTrash2 /> Delete
-                          </span>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
+                          {isLiked ? (
+                            <HeartMinusIcon className="w-5 h-5 text-primary" />
+                          ) : (
+                            <HeartIcon className="w-5 h-5" />
+                          )}
+                          <span>{post.likes?.length || 0}</span>
+                        </button>
 
-                  {attachment && (
-                    <div className={layout === "row" ? "w-1/3 flex-shrink-0" : "w-full"}>
-                      {isImage && (
-                        <img
-                          src={attachment}
-                          alt="Attachment"
-                          className="rounded-lg w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      )}
-                      {isVideo && (
-                        <video controls className="rounded-lg w-full h-48 object-cover">
-                          <source src={attachment} type="video/mp4" />
-                        </video>
-                      )}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1 text-base-content/60">
+                            <MessageCircleIcon className="w-4 h-4" />
+                            <span>{post.comments?.length || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-base-content/60">
+                            <EyeIcon className="w-4 h-4" />
+                            <span>{post.views || 0}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  </motion.div>
+                );
+              })}
+            </motion.div>
 
-                  <div className={layout === "row" ? "w-2/3 p-4" : "p-4"}>
-                    <h3 className="text-xl font-semibold mb-1">{post.title}</h3>
-                    <p className="text-sm mb-2 line-clamp-3">{post.description}</p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleLike.mutate(post._id);
-                      }}
-                      className="mt-3 text-sm text-pink-400"
-                    >
-                      ❤️ Like ({post.likes?.length || 0})
-                    </button>
-
-                    <div className="text-xs text-gray-500 flex justify-between items-center mt-3">
-                      <span>Author: {post.author?.fullName || 'Unknown'}</span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+            {/* Load More Button */}
+            {filteredAndSortedPosts.length > 12 && (
+              <motion.div
+                className="text-center mt-12 flex gap-4 justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                {visibleCount < filteredAndSortedPosts.length && (
+                  <button
+                    onClick={handleShowMore}
+                    className="btn btn-primary gap-2"
+                  >
+                    <PlusIcon className="w-4 h-4" />
+                    Load More Posts
+                  </button>
+                )}
+                {visibleCount > 12 && (
+                  <button
+                    onClick={handleShowLess}
+                    className="btn btn-outline gap-2"
+                  >
+                    Show Less
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </>
         ) : (
           <motion.div
             className="text-center py-16"
@@ -322,62 +443,42 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="w-20 h-20 mx-auto bg-base-200 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+            <div className="w-24 h-24 mx-auto bg-base-200 rounded-full flex items-center justify-center mb-6">
+              <MessageCircleIcon className="w-12 h-12 text-base-content/40" />
             </div>
-            <h3 className="text-xl font-semibold text-base-content mb-2">No posts found</h3>
-            <p className="text-base-content/60 mb-6">
-              {searchQuery ? "No posts match your search criteria. Try adjusting your search terms." : "No posts available. Be the first to create one!"}
+            <h3 className="text-2xl font-semibold text-base-content mb-3">No posts found</h3>
+            <p className="text-base-content/60 max-w-md mx-auto mb-8">
+              {searchQuery 
+                ? "No posts match your search criteria. Try adjusting your search terms."
+                : "The community hasn't posted anything yet. Be the first to share your knowledge!"
+              }
             </p>
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 onClick={() => setSearchQuery("")}
-                className="btn btn-outline btn-primary"
+                className="btn btn-primary gap-2"
               >
+                <XIcon className="w-4 h-4" />
                 Clear Search
               </button>
-            )}
-          </motion.div>
-        )}
-
-        {filteredAndSortedPosts.length > 9 && (
-          <motion.div
-            className="text-center mt-8 flex gap-4 justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            {visibleCount < filteredAndSortedPosts.length && (
+            ) : (
               <button
-                onClick={handleShowMore}
-                className="btn btn-primary btn-lg"
+                onClick={() => navigate('/create-post')}
+                className="btn btn-primary gap-2"
               >
-                Show More
-              </button>
-            )}
-            {visibleCount > 9 && (
-              <button
-                onClick={handleShowLess}
-                className="btn btn-outline btn-lg"
-              >
-                Show Less
+                <PlusIcon className="w-4 h-4" />
+                Create First Post
               </button>
             )}
           </motion.div>
         )}
       </div>
 
+      {/* Edit Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
-            className="modal modal-open fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4"
+            className="modal modal-open fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -385,53 +486,84 @@ const HomePage = () => {
             onClick={() => setShowModal(false)}
           >
             <motion.div
-              className="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+              className="modal-box max-w-2xl w-full bg-base-100 rounded-2xl shadow-2xl p-0 overflow-hidden"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ duration: 0.3 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <h3 className="font-bold text-lg mb-4">Edit Post</h3>
-                <div>
+              <div className="p-6 border-b border-base-300/30">
+                <h3 className="text-xl font-semibold text-base-content">Edit Post</h3>
+              </div>
+              
+              <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">Post Title</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="Title"
+                    placeholder="Enter post title"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="input input-bordered w-full mb-3"
+                    className="input input-bordered"
+                    required
                   />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">Description</span>
+                  </label>
                   <textarea
-                    placeholder="Description"
+                    placeholder="Enter post description"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    className="textarea textarea-bordered w-full mb-3"
+                    className="textarea textarea-bordered h-32"
+                    required
                   />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">Attachment (Optional)</span>
+                  </label>
                   <input
                     type="file"
                     onChange={(e) => setEditFile(e.target.files[0])}
-                    className="file-input file-input-bordered w-full mb-4"
+                    className="file-input file-input-bordered"
                   />
-                  <div className="modal-action">
-                    <button type="button" className="btn" onClick={() => setShowModal(false)}>
-                      Cancel
-                    </button>
-                    <button type="button" className="btn btn-error" onClick={handleEditSubmit} disabled={editLoading}>
-                      {editLoading ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
                 </div>
-              </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary gap-2"
+                    disabled={editLoading}
+                  >
+                    {editLoading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <EditIcon className="w-4 h-4" />}
+                    Update Post
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showConfirm && (
           <motion.div
-            className="modal modal-open fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4"
+            className="modal modal-open fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -439,7 +571,7 @@ const HomePage = () => {
             onClick={() => setShowConfirm(false)}
           >
             <motion.div
-              className="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+              className="modal-box max-w-md w-full bg-base-100 rounded-2xl shadow-2xl p-0 overflow-hidden"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -447,13 +579,35 @@ const HomePage = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
-                <h3 className="font-bold text-lg">Are you sure you want to delete this post?</h3>
-                <div className="modal-action">
-                  <button className="btn" onClick={() => setShowConfirm(false)}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-error/10 rounded-full flex items-center justify-center">
+                    <Trash2Icon className="w-6 h-6 text-error" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-base-content">Delete Post</h3>
+                    <p className="text-base-content/60">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <p className="text-base-content/70 mb-6">
+                  Are you sure you want to delete the post "<span className="font-semibold">{activePost?.title}</span>"?
+                </p>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setShowConfirm(false)}
+                    disabled={deleteLoading}
+                  >
                     Cancel
                   </button>
-                  <button className="btn btn-error" onClick={handleDelete} disabled={deleteLoading}>
-                    {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+                  <button
+                    className="btn btn-error gap-2"
+                    onClick={handleDelete}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <Trash2Icon className="w-4 h-4" />}
+                    Delete Post
                   </button>
                 </div>
               </div>

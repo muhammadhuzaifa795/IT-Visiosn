@@ -18,7 +18,7 @@ const CommentThread = ({ comment, postId, depth = 0 }) => {
         <>
           <button
             onClick={() => setShowReplies(!showReplies)}
-            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm ml-14 mt-2 mb-2 transition-colors"
+            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 text-sm ml-14 mt-2 mb-2 transition-colors"
           >
             <FontAwesomeIcon icon={showReplies ? faChevronUp : faChevronDown} />
             <span>
@@ -27,7 +27,7 @@ const CommentThread = ({ comment, postId, depth = 0 }) => {
           </button>
 
           {showReplies && (
-            <div className="border-l-2 border-gray-700 ml-6 pl-2">
+            <div className="border-l-2 border-gray-300 ml-6 pl-2 space-y-2">
               {comment.replies.map((reply) => (
                 <CommentThread
                   key={reply._id}
