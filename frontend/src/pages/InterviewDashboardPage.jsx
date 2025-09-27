@@ -177,7 +177,7 @@ const InterviewDashboardPage = () => {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <Toaster position="top-right" />
+      {/* <Toaster position="top-right" /> */}
       
       {/* Header Section */}
       <div className="bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 border-b border-base-300/30">
