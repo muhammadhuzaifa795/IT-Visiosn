@@ -2,7 +2,7 @@
 "use client"
 import { Link, useLocation ,useNavigate} from "react-router"
 import useAuthUser from "../hooks/useAuthUser"
-import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, Ticket,TrophyIcon, ContactIcon } from 'lucide-react'
+import { BellIcon, HomeIcon, PodcastIcon, MessageCircleIcon, ShipWheelIcon, UsersIcon, Code2Icon, FileTextIcon, MenuIcon, ChevronLeftIcon, XIcon, KeyIcon, LogOutIcon, SettingsIcon, HelpCircleIcon, CopyIcon, MapIcon, UserRound, SparklesIcon, Ticket,TrophyIcon, ContactIcon, SubscriptIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
@@ -110,6 +110,7 @@ const { logoutMutation, isPending } = useLogout();
     // { to: "/password-reset", label: "Password Reset", icon: KeyIcon, gradient: "from-red-500/20 to-pink-500/20" },
     { to: "/add-face", label: "Add Face", icon: KeyIcon, gradient: "from-blue-500/20 to-indigo-500/20" },
     // { to: "/settingspage", label: "Settingspage", icon: SettingsIcon, gradient: "from-gray-500/20 to-slate-500/20" },
+    { to: "/subscription", label: "Subscribe", icon: SubscriptIcon, gradient: "from-cyan-500/20 to-blue-500/20" },
     { to: "/help", label: "Help", icon: HelpCircleIcon, gradient: "from-cyan-500/20 to-blue-500/20" },
     // { to: "/logout", label: "Logout", icon: LogOutIcon, gradient: "from-red-500/20 to-orange-500/20" },
   ]

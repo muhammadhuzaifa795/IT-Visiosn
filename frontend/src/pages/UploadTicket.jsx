@@ -80,7 +80,7 @@ const UploadTicket = () => {
 
     createTicket(formData, {
       onSuccess: () => {
-        toast.success("Ticket created successfully!", {
+        toast.success("Ticket created successfully please wait for AI to create helpfull notebook and assigned users according to related problem!", {
           style: {
             background: "hsl(var(--su))",
             color: "hsl(var(--suc))",
