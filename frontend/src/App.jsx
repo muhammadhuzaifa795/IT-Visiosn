@@ -30,6 +30,7 @@ import TicketDetailPage from "./pages/TicketDetailPage.jsx";
 import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import UserContacts from "./pages/ContactPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
 
@@ -486,6 +487,18 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <CVPreview />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/subscription"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <SubscriptionPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

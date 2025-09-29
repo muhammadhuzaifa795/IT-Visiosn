@@ -99,9 +99,9 @@ const RoadmapPage = () => {
           return updatedData
         })
       },
-      onError: (error) => {
-        toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`)
-      },
+      // onError: (error) => {
+      //   toast.error(`Failed to create roadmap: ${error.response?.data?.message || "Please try again."}`)
+      // },
     })
   }
 
@@ -122,9 +122,9 @@ const RoadmapPage = () => {
         setIsDeleteModalOpen(false)
         setRoadmapToDelete(null)
       },
-      onError: (error) => {
-        toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`)
-      },
+      // onError: (error) => {
+      //   toast.error(`Failed to delete roadmap: ${error.response?.data?.message || "Please try again."}`)
+      // },
     })
   }
 
@@ -265,7 +265,7 @@ const RoadmapPage = () => {
 
   return (
     <div className="min-h-screen bg-base-200">
-      <Toaster position="top-right" />
+
       
       {/* Header Section */}
       <div className="bg-gradient-to-br from-primary/5 via-base-100 to-secondary/5 border-b border-base-300/30">
@@ -472,7 +472,7 @@ const RoadmapPage = () => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-base-content/60">Progress</span>
                         <span className="font-medium text-base-content">{progress}%</span>
@@ -483,7 +483,7 @@ const RoadmapPage = () => {
                           style={{ width: `${progress}%` }}
                         ></div>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Metadata */}
                     <div className="flex items-center justify-between text-sm text-base-content/60">

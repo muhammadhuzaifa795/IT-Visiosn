@@ -30,6 +30,7 @@ import chatboatRoutes from './routes/chatboat.route.js';
 import leaderboardRoutes from './routes/leaderboard.route.js';
 import ticketRoutes from "./routes/ticket.route.js"
 import contactRoutes from "./routes/contact.route.js"
+import paymentRoutes from "./routes/payment.route.js"
 import { setSocketIOInstance } from './controllers/post.controller.js';
 import { connectDB } from './lib/db.js';
 
@@ -149,13 +150,14 @@ app.use('/api/ai', protectRoute, aiRoutes);
 app.use('/api/cv', protectRoute, cvRoutes);
 app.use('/api/comment', protectRoute, commentRoutes);
 app.use('/api/face-auth', faceAuthRoutes);
-app.use('/api/roadmap', protectRoute, roadMapRoutes); // Changed from authMiddleware to protectRoute
+app.use('/api/roadmap', protectRoute, roadMapRoutes); 
 app.use('/api/interview', protectRoute, interviewRoutes);
 app.use('/api/results', protectRoute, resultRoutes);
 app.use('/api/chatbot', protectRoute, chatboatRoutes);
 app.use('/api/ticket', protectRoute, ticketRoutes);
 app.use('/api/leaderboard', protectRoute, leaderboardRoutes);
 app.use('/api/contact', protectRoute, contactRoutes);
+app.use('/api/payment', protectRoute, paymentRoutes);
 app.use(
   '/api/inngest',
   serve({

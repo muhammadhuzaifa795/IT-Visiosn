@@ -2,13 +2,14 @@ import express from "express"
 import {protectRoute} from "../middleware/auth.middleware.js"
 import { createTicket,getTickets,deleteTicket,getTicketById,addSolution } from "../controllers/ticket.controller.js";
 import upload from "../middleware/upload.js";
+import checkSubscription  from "../middleware/checkSubscription.middleware.js";
 
 const router = express.Router();
 
 router.use(protectRoute)
 
 
-router.post('/create-ticket',upload.single("attachments"),createTicket);
+router.post('/create-ticket',checkSubscription,upload.single("attachments"),createTicket);
 router.get("/tickets", getTickets);
 router.delete("/tickets/:id", deleteTicket);
 router.get("/tickets/:id", getTicketById);

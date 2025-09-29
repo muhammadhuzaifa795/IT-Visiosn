@@ -81,16 +81,34 @@ const userSchema = new mongoose.Schema(
     }],
     isBanned: { type: Boolean, default: false },
     banReason: { type: String, default: "" },
-    otp: {
+    subscription: {
       type: String,
+      enum: ["free", "monthly", "yearly"],
+      default: "free",
     },
-    otpExpiresAt: {
-      type: Date,
-    },
+    subscriptionActivatedAt: { type: Date, default: null },
+    subscriptionExpiresAt: { type: Date, default: null },
+    subscriptionProvider: { type: String, default: "fake" },
+    subscriptionHistory: [
+      {
+        plan: { type: String, enum: ["monthly", "yearly", "free"] },
+        activatedAt: Date,
+        expiresAt: Date,
+        provider: String,
+        note: String,
+      },
+    ],
+  
+  otp: {
+  type: String,
+},
+  otpExpiresAt: {
+  type: Date,
+},
 
   },
-  {
-    timestamps: true,
+{
+  timestamps: true,
   }
 );
 

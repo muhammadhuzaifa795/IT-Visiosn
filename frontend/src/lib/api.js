@@ -451,3 +451,21 @@ export const getBannedUsers = async () => {
   const res = await axiosInstance.get("/users/banned-users");
   return res.data.bannedUsers;
 };
+
+
+export const activateSubscription = async (plan) => {
+  const res = await axiosInstance.post("/payment/subscribe", { plan });
+  return res.data;
+};
+
+// USER cancel
+export const cancelSubscription = async () => {
+  const res = await axiosInstance.post("/payment/cancel-payment");
+  return res.data;
+};
+
+// ADMIN clear subscription of a user
+export const clearSubscriptionByAdmin = async (userId) => {
+  const res = await axiosInstance.post(`/payment/admin/clear/${userId}`);
+  return res.data;
+};

@@ -67,9 +67,12 @@ export const onTicketCreated = inngest.createFunction(
         if (skills.length > 0) {
           users = await User.find({
             role: "user",
-            skills: { $in: skills },
+            skills: {
+              $in: skills.map((s) => new RegExp(`^${s}$`, "i")), // i = case-insensitive
+            },
             _id: { $ne: ticket.createdBy },
           });
+
         }
 
         await Ticket.findByIdAndUpdate(ticket._id, {
