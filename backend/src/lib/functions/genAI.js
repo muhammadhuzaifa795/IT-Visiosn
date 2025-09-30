@@ -2,33 +2,66 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+/**
+ * Generate a long, high-quality description in Markdown format.
+ * Expands short/rough input into a detailed, fluent, structured article.
+ *
+ * @param {string} title - Title of the content
+ * @param {string} description - Short or rough description
+ * @returns {Promise<string>} - Generated markdown description
+ */
 export async function generateLongDesc(title, description) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
+# Context
 Title: ${title}
 Description: ${description}
 
-Step 1: Clean and translate the inputs (may be in Roman Urdu or poorly written).
-Step 2: Infer the full meaning and expand context.
-Step 3: Write a detailed, fluent, high-quality long-form article (1000+ words) in English. No formatting or headings. Plain text only.`;
+# Instructions
+1. Clean and refine the inputs (may be in Roman Urdu or poorly written).
+2. Expand the meaning with additional relevant context.
+3. Generate a **well-structured Markdown article** with around 400–600 words (not excessively long).
+4. Use **headings, subheadings, bullet points, numbered lists, and bold text** where helpful.
+5. Ensure the content is fluent, professional, and human-readable.
+6. ⚠️ Do NOT add meta text like "Here's an article" or "Based on your request".
+`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text().trim();
+    let text = response.text().trim();
 
-    if (!text || text.length < 100) {
-      return "AI failed to generate a proper description.";
+    // 🧹 Clean unwanted intro phrases
+    text = text.replace(/^here'?s.*?:/i, "").trim();
+
+    // ✂️ Enforce max length (optional safeguard)
+    const maxLength = 5000; // ~700–800 words
+    if (text.length > maxLength) {
+      text = text.substring(0, maxLength).trim() + "\n\n...(content truncated)";
+    }
+
+    if (!text || text.length < 200) {
+      return "⚠️ AI failed to generate a proper description.";
     }
 
     return text;
   } catch (err) {
     console.error("Gemini generation error:", err.message);
-    return "AI failed to generate a proper description.";
+    return "⚠️ AI failed to generate a proper description.";
   }
 }
 
+
+/**
+ * Check if the given post is related to Information Technology.
+ *
+ * @param {string} title - Post title
+ * @param {string} description - Post description
+ * @param {string} attachmentName - File name (optional)
+ * @param {string} mimeType - File type (optional)
+ * @returns {Promise<boolean>} - true if IT relevant, else false
+ */
 export async function isITRelevant(title, description, attachmentName = '', mimeType = '') {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -39,9 +72,9 @@ Description: ${description}
 Attachment Name: ${attachmentName}
 Attachment Type: ${mimeType}
 
-Using only the above information (no file content), determine whether this post is related to Information Technology (e.g., programming, software, networking, tech education).
+Determine if this is **Information Technology related** (e.g., programming, software, networking, databases, cloud, AI, education in IT).
 
-Respond with ONLY "YES" or "NO".
+Respond ONLY with "YES" or "NO".
 `;
 
     const result = await model.generateContent(prompt);
@@ -54,4 +87,3 @@ Respond with ONLY "YES" or "NO".
     return false;
   }
 }
-
