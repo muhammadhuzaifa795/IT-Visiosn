@@ -187,10 +187,10 @@ const PostDetail = () => {
             
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 text-sm text-base-content/60">
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <EyeIcon className="w-4 h-4" />
                   <span>{viewCount}</span>
-                </div>
+                </div> */}
                 <div className="flex items-center gap-1">
                   <BookOpenIcon className="w-4 h-4" />
                   <span>{readTime} min read</span>

@@ -164,6 +164,19 @@ export async function getPostsByUserId(userId) {
   }
 }
 
+
+
+export const addViewToPost = async (postId) => {
+  const res = await axiosInstance.post(`/posts/${postId}/views`);
+  return res.data;
+};
+
+export const getPostViews = async (postId) => {
+  const res = await axiosInstance.get(`/posts/${postId}/views`);
+  return res.data;
+};
+
+
 // AI API functions
 export async function aiPrompt(prompt) {
   const response = await axiosInstance.post("/ai/get-response/", { prompt })

@@ -159,3 +159,46 @@ export async function toggleLikePost(req, res) {
 }
 
 // 💬 Add Comment (with Socket Emit)
+
+
+export const addView = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user._id;
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // check agar user already views me hai
+    const alreadyViewed = post.views.find(
+      (v) => v.user.toString() === userId.toString()
+    );
+
+    if (!alreadyViewed) {
+      post.views.push({ user: userId, viewedAt: new Date() });
+      await post.save();
+    }
+
+    res.json({ message: "View added", viewsCount: post.views.length });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getViews = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const post = await Post.findById(postId).populate("views.user", "fullName profilePic");
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    res.json({
+      viewsCount: post.views.length,
+      views: post.views.map((v) => ({
+        user: v.user,
+        viewedAt: v.viewedAt,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

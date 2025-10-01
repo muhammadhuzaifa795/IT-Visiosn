@@ -30,32 +30,66 @@ Ticket information:
 
     jsonString = jsonString.replace(/[\u0000-\u001F]+/g, "").replace(/\n/g, " ");
 
+    let parsed;
     try {
-      const parsed = JSON.parse(jsonString);
-      return {
-        summary: parsed.summary || "No summary provided",
-        priority: ["low", "medium", "high"].includes((parsed.priority || "").toLowerCase())
-          ? parsed.priority.toLowerCase()
-          : "medium",
-        helpfulNotes: parsed.helpfulNotes || "Please manually review the ticket description and provide debugging instructions.",
-        relatedSkills: Array.isArray(parsed.relatedSkills)
-          ? parsed.relatedSkills.filter((s) => typeof s === "string")
-          : [],
-      };
+      parsed = JSON.parse(jsonString);
     } catch {
-      return {
-        summary: "Unable to analyze ticket due to AI response error.",
-        priority: "medium",
-        helpfulNotes: "Please manually review the ticket description and provide debugging instructions.",
-        relatedSkills: [],
-      };
+      parsed = {};
     }
+
+    const summary = parsed.summary || "No summary provided";
+    const priority = ["low", "medium", "high"].includes((parsed.priority || "").toLowerCase())
+      ? parsed.priority.toLowerCase()
+      : "medium";
+    const helpfulNotes =
+      parsed.helpfulNotes ||
+      "Please manually review the ticket description and provide debugging instructions.";
+
+    // ✅ Clean related skill names
+    const normalizeSkill = (skill) => {
+      if (!skill || typeof skill !== "string") return null;
+      return skill
+        .replace(/programming|language|framework|library|tech/gi, "") // remove unwanted suffix
+        .replace(/\s+/g, " ") // extra spaces
+        .trim();
+    };
+
+    const relatedSkills = Array.isArray(parsed.relatedSkills)
+      ? parsed.relatedSkills.map(normalizeSkill).filter((s) => s)
+      : [];
+
+    // ✅ Markdown formatted output
+    const markdownReport = `
+### 📝 Ticket Analysis Report
+
+- **Summary:** ${summary}
+- **Priority:** ${priority.toUpperCase()}
+- **Helpful Notes:**
+  ${helpfulNotes.split(". ").map((n) => `  - ${n}`).join("\n")}
+- **Related Skills:** ${relatedSkills.length ? relatedSkills.join(", ") : "None"}
+`;
+
+    return {
+      summary,
+      priority,
+      helpfulNotes,
+      relatedSkills,
+      markdownReport,
+    };
   } catch {
     return {
       summary: "Unable to analyze ticket due to AI processing error.",
       priority: "medium",
-      helpfulNotes: "Please manually review the ticket description and provide debugging instructions.",
+      helpfulNotes:
+        "Please manually review the ticket description and provide debugging instructions.",
       relatedSkills: [],
+      markdownReport: `
+### ⚠️ Ticket Analysis Failed
+- **Summary:** Unable to analyze ticket due to AI processing error.
+- **Priority:** MEDIUM
+- **Helpful Notes:** Please manually review the ticket description and provide debugging instructions.
+- **Related Skills:** None
+`,
     };
   }
 };

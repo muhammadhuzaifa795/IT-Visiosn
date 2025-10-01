@@ -1,552 +1,397 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { Toaster, toast } from "react-hot-toast"
-import { Plus, Eye, Users, Ticket, Crown, TrendingUp, BarChart3, UserPlus, Activity } from "lucide-react"
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  Users, Ticket, Crown, Activity, BarChart3, Search, ChevronUp, ChevronDown, Trash2, Eye, Frown
+} from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 import { useNavigate } from "react-router"
 import { Bar, Doughnut } from "react-chartjs-2"
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from "chart.js"
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement
+} from "chart.js"
 import useTickets from "../hooks/useTicket"
 import useLeaderboard from "../hooks/useLeaderboard"
-import { getAllUsers, deleteUserById, createUser } from "../lib/api"
+import { getAllUsers, deleteUserById } from "../lib/api"
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
 
-const AdminDashboard = () => {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showAddUserForm, setShowAddUserForm] = useState(false)
-  const [activeTab, setActiveTab] = useState("overview")
-  const [newUser, setNewUser] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    role: "user",
-  })
+// Custom hook for debouncing input
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+  return debouncedValue
+}
 
-  const { tickets, isFetching: isFetchingTickets, fetchError: ticketsError } = useTickets()
-  const { leaderboard, isFetching: isFetchingLeaderboard, fetchError: leaderboardError } = useLeaderboard()
-  const navigate = useNavigate()
+// Reusable Components
+const StatCard = ({ title, value, icon: Icon, color, loading }) => {
+  const colorClasses = {
+    blue: { bg: "bg-blue-500/10", text: "text-blue-500" },
+    purple: { bg: "bg-purple-500/10", text: "text-purple-500" },
+    yellow: { bg: "bg-yellow-500/10", text: "text-yellow-500" },
+    green: { bg: "bg-green-500/10", text: "text-green-500" },
+  }
+  const selectedColor = colorClasses[color] || colorClasses.blue
 
-  // Calculate statistics
-  const stats = {
-    totalUsers: users.length,
-    totalTickets: tickets.length,
-    completedTickets: tickets.filter(t => t.status === "completed" || t.status === "complete").length,
-    pendingTickets: tickets.filter(t => t.status === "pending" || t.status === "open").length,
-    subscribedUsers: users.filter(user => user.subscription && user.subscription !== "free").length,
-    freeUsers: users.filter(user => user.subscription === "free" || !user.subscription).length,
-    monthlySubscriptions: users.filter(user => user.subscription === "monthly").length,
-    yearlySubscriptions: users.filter(user => user.subscription === "yearly").length,
+  if (loading) {
+    return <div className="bg-base-100 p-6 rounded-2xl shadow-lg border border-base-300/30 h-[100px] skeleton"></div>
   }
 
-  const fetchUsers = async () => {
-    setLoading(true)
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-base-100 p-6 rounded-2xl shadow-lg border border-base-300/30 hover:shadow-primary/20 hover:border-primary/50 transition-all duration-300"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-base-content/70 text-sm font-medium">{title}</p>
+          <p className="text-3xl font-bold mt-1 text-base-content">{value}</p>
+        </div>
+        <div className={`p-3 rounded-full ${selectedColor.bg}`}>
+          <Icon className={`w-6 h-6 ${selectedColor.text}`} />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+const DashboardCard = ({ title, icon: Icon, children, className = "" }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.5 }}
+    className={`bg-base-100 rounded-2xl shadow-lg p-6 border border-base-300/30 ${className}`}
+  >
+    <div className="flex items-center justify-between mb-6">
+      <h2 className="text-xl font-semibold flex items-center gap-2">
+        {Icon && <Icon className="w-5 h-5" />}
+        {title}
+      </h2>
+    </div>
+    {children}
+  </motion.div>
+)
+
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => (
+  <AnimatePresence>
+    {isOpen && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-base-100 rounded-2xl p-8 max-w-sm w-full shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-2xl font-bold mb-4">{title}</h2>
+          <p className="text-base-content/70 mb-8">{message}</p>
+          <div className="flex gap-4">
+            <button onClick={onConfirm} className="btn btn-error flex-1">Confirm</button>
+            <button onClick={onClose} className="btn btn-ghost flex-1">Cancel</button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+)
+
+const UserTable = ({ users, loading, onDelete, onViewProfile }) => {
+  const [searchTerm, setSearchTerm] = useState("")
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+  const [sortConfig, setSortConfig] = useState({ key: 'fullName', direction: 'ascending' })
+  const [currentPage, setCurrentPage] = useState(1)
+  const usersPerPage = 10
+
+  const sortedUsers = useMemo(() => {
+    let sortableUsers = [...users]
+    if (sortConfig.key) {
+      sortableUsers.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'ascending' ? -1 : 1
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'ascending' ? 1 : -1
+        return 0
+      })
+    }
+    return sortableUsers
+  }, [users, sortConfig])
+
+  const filteredUsers = useMemo(() =>
+    sortedUsers.filter(user =>
+      user.fullName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    ), [sortedUsers, debouncedSearchTerm])
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage
+    return filteredUsers.slice(startIndex, startIndex + usersPerPage)
+  }, [filteredUsers, currentPage])
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm])
+
+
+  const requestSort = (key) => {
+    let direction = 'ascending'
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  const SortIcon = ({ columnKey }) => {
+    if (sortConfig.key !== columnKey) return null
+    return sortConfig.direction === 'ascending' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+  }
+
+  return (
+    <DashboardCard title="User Management" icon={Users}>
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50" size={20} />
+        <input
+          type="text"
+          placeholder="Search by name or email..."
+          className="input input-bordered w-full pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              {['fullName', 'email', 'role'].map((key) => (
+                <th key={key} onClick={() => requestSort(key)} className="cursor-pointer">
+                  <span className="flex items-center gap-2 capitalize">{key.replace('fullName', 'Name')} <SortIcon columnKey={key} /></span>
+                </th>
+              ))}
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td colSpan="4"><div className="skeleton h-8 w-full"></div></td>
+                </tr>
+              ))
+            ) : paginatedUsers.length > 0 ? (
+              paginatedUsers.map((user) => (
+                <tr key={user._id} className="hover">
+                  <td>{user.fullName}</td>
+                  <td>{user.email}</td>
+                  <td><span className={`badge ${user.role === 'admin' ? 'badge-primary' : 'badge-ghost'}`}>{user.role}</span></td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button onClick={() => onViewProfile(user._id)} className="btn btn-ghost btn-sm btn-circle" aria-label="View User"><Eye size={16} /></button>
+                      <button onClick={() => onDelete(user._id)} className="btn btn-ghost btn-sm btn-circle text-error" aria-label="Delete User"><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="text-center py-12">
+                  <div className="flex flex-col items-center gap-4 text-base-content/60">
+                    <Frown size={48} />
+                    <p className="font-semibold">No users found</p>
+                    <p className="text-sm">Try adjusting your search query.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <div className="btn-group">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="btn" disabled={currentPage === 1}>«</button>
+            <button className="btn">Page {currentPage} of {totalPages}</button>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="btn" disabled={currentPage === totalPages}>»</button>
+          </div>
+        </div>
+      )}
+    </DashboardCard>
+  )
+}
+
+// Main Dashboard Component
+const AdminDashboard = () => {
+  const [users, setUsers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [activeTab, setActiveTab] = useState("overview")
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState(null)
+  const [chartTimeRange, setChartTimeRange] = useState('Month')
+
+  const { tickets, isFetching: isFetchingTickets } = useTickets()
+  const navigate = useNavigate()
+
+  const fetchUsers = useCallback(async () => {
+    setLoadingUsers(true)
     try {
       const response = await getAllUsers()
-      if (Array.isArray(response.users)) {
-        setUsers(response.users)
-      } else {
-        setUsers([])
-        toast.error("No users found.")
-      }
+      setUsers(Array.isArray(response.users) ? response.users : [])
     } catch (err) {
-      console.error("API Error:", err)
       setUsers([])
       toast.error("Failed to fetch users.")
     } finally {
-      setLoading(false)
+      setLoadingUsers(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
-  const handleDelete = async (userId) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      try {
-        await deleteUserById(userId)
-        setUsers(users.filter((user) => user._id !== userId))
-        toast.success("User deleted successfully!")
-      } catch (err) {
-        console.error("Delete Error:", err)
-        toast.error("Failed to delete user.")
-      }
-    }
+  const handleDeleteRequest = (userId) => {
+    setUserToDelete(userId)
+    setDeleteModalOpen(true)
   }
 
-  const handleViewProfile = (userId) => {
-    navigate(`/admin/user/${userId}`)
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setNewUser({ ...newUser, [name]: value })
-  }
-
-  const handleAddUser = async (e) => {
-    e.preventDefault()
-    const userToCreate = { ...newUser }
-    if (userToCreate.phone === "") {
-      delete userToCreate.phone
-    }
+  const confirmDelete = async () => {
+    if (!userToDelete) return
     try {
-      await createUser(userToCreate)
-      toast.success("User created successfully!")
-      setShowAddUserForm(false)
-      setNewUser({
-        fullName: "",
-        email: "",
-        phone: "",
-        password: "",
-        role: "user",
-      })
-      fetchUsers()
+      await deleteUserById(userToDelete)
+      setUsers(prevUsers => prevUsers.filter((user) => user._id !== userToDelete))
+      toast.success("User deleted successfully!")
     } catch (err) {
-      console.error("Create User Error:", err)
-      toast.error(err.response?.data?.error || "Failed to create user.")
+      toast.error(err.response?.data?.error || "Failed to delete user.")
+    } finally {
+      setUserToDelete(null)
+      setDeleteModalOpen(false)
     }
   }
 
-  // Main Chart Data
-  const chartData = {
-    labels: ["Total Users", "Total Tickets", "Completed", "Pending"],
-    datasets: [
-      {
+  const handleViewProfile = (userId) => navigate(`/admin/user/${userId}`)
+
+  const stats = useMemo(() => ({
+    totalUsers: users.length,
+    totalTickets: tickets.length,
+    subscribedUsers: users.filter(user => user.subscription && user.subscription !== "free").length,
+    completionRate: tickets.length ? Math.round((tickets.filter(t => t.status === "completed" || t.status === "complete").length / tickets.length) * 100) : 0,
+    freeUsers: users.filter(user => user.subscription === "free" || !user.subscription).length,
+    monthlySubscriptions: users.filter(user => user.subscription === "monthly").length,
+    yearlySubscriptions: users.filter(user => user.subscription === "yearly").length,
+  }), [users, tickets])
+
+  const barChartData = useMemo(() => {
+    const dataMultiplier = chartTimeRange === 'Year' ? 12 : chartTimeRange === 'Week' ? 0.25 : 1
+    return {
+      labels: ["Total Users", "Total Tickets", "Subscribed", "Completed"],
+      datasets: [{
         label: "Count",
         data: [
-          stats.totalUsers,
-          stats.totalTickets,
-          stats.completedTickets,
-          stats.pendingTickets,
+          Math.round(stats.totalUsers * dataMultiplier),
+          Math.round(stats.totalTickets * dataMultiplier),
+          Math.round(stats.subscribedUsers * dataMultiplier),
+          Math.round(stats.totalTickets * (stats.completionRate / 100) * dataMultiplier),
         ],
-        backgroundColor: [
-          "rgba(59, 130, 246, 0.8)",
-          "rgba(139, 92, 246, 0.8)",
-          "rgba(34, 197, 94, 0.8)",
-          "rgba(239, 68, 68, 0.8)"
-        ],
-        borderColor: [
-          "rgb(59, 130, 246)",
-          "rgb(139, 92, 246)",
-          "rgb(34, 197, 94)",
-          "rgb(239, 68, 68)"
-        ],
+        backgroundColor: ["#3b82f6", "#8b5cf6", "#f59e0b", "#22c55e"],
+        borderColor: ["#3b82f6", "#8b5cf6", "#f59e0b", "#22c55e"],
         borderWidth: 2,
         borderRadius: 8,
-      },
-    ],
-  }
+      }],
+    }
+  }, [stats, chartTimeRange])
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { 
-        display: false 
-      },
-      title: { 
-        display: true, 
-        text: "System Overview",
-        font: { size: 16, weight: 'bold' }
-      },
-    },
-    scales: {
-      y: { 
-        beginAtZero: true, 
-        grid: { color: 'rgba(0,0,0,0.1)' },
-        ticks: { color: 'rgba(100, 100, 100, 0.8)' }
-      },
-      x: { 
-        grid: { display: false },
-        ticks: { color: 'rgba(100, 100, 100, 0.8)' }
-      },
-    },
-  }
-
-  // Subscription Chart Data
-  const subscriptionData = {
+  const doughnutChartData = useMemo(() => ({
     labels: ["Free Users", "Monthly Pro", "Yearly Pro"],
-    datasets: [
-      {
-        data: [stats.freeUsers, stats.monthlySubscriptions, stats.yearlySubscriptions],
-        backgroundColor: [
-          "rgba(156, 163, 175, 0.8)",
-          "rgba(59, 130, 246, 0.8)",
-          "rgba(245, 158, 11, 0.8)"
-        ],
-        borderColor: [
-          "rgb(156, 163, 175)",
-          "rgb(59, 130, 246)",
-          "rgb(245, 158, 11)"
-        ],
-        borderWidth: 2,
-      },
-    ],
-  }
+    datasets: [{
+      data: [stats.freeUsers, stats.monthlySubscriptions, stats.yearlySubscriptions],
+      backgroundColor: ["#9ca3af", "#3b82f6", "#f59e0b"],
+      borderColor: ["#9ca3af", "#3b82f6", "#f59e0b"],
+      borderWidth: 2,
+    }],
+  }), [stats.freeUsers, stats.monthlySubscriptions, stats.yearlySubscriptions])
 
-  const StatCard = ({ title, value, icon: Icon, color, change }) => (
-    <div className={`bg-base-100 p-6 rounded-xl shadow-lg border border-base-300/30 hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-base-content/60 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold mt-2 text-base-content">{value}</p>
-          {change && (
-            <p className={`text-sm mt-1 ${change > 0 ? 'text-success' : 'text-error'}`}>
-              {change > 0 ? '↑' : '↓'} {Math.abs(change)}%
-            </p>
-          )}
-        </div>
-        <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-6 h-6 ${color.replace('text-', 'text-')}`} />
-        </div>
-      </div>
-    </div>
-  )
+  const isDataLoading = loadingUsers || isFetchingTickets;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 p-6">
+    <div className="min-h-screen bg-base-200 p-4 sm:p-6 lg:p-8">
       <Toaster position="top-right" />
-      
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-        <div>
-          {/* <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1> */}
-          <p className="text-base-content/60 mt-2">Manage your platform and monitor performance</p>
-        </div>
-        {/* <button 
-          onClick={() => setShowAddUserForm(!showAddUserForm)} 
-          className="btn btn-primary gap-2 shadow-lg hover:shadow-xl transition-all"
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+      />
+
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold text-base-content">Admin Dashboard</h1>
+        <p className="text-base-content/60 mt-2">Welcome back! Here's an overview of your system.</p>
+      </header>
+
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
         >
-          <UserPlus size={20} />
-          Add New User
-        </button> */}
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex gap-2 mb-8 bg-base-200 rounded-xl p-1 w-fit">
-        {[
-          { id: "overview", label: "Overview", icon: BarChart3 },
-          { id: "users", label: "Users", icon: Users },
-          { id: "tickets", label: "Tickets", icon: Ticket },
-          { id: "analytics", label: "Analytics", icon: TrendingUp }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-              activeTab === tab.id 
-                ? 'bg-primary text-primary-content shadow-lg' 
-                : 'text-base-content/70 hover:text-base-content hover:bg-base-300'
-            }`}
-          >
-            <tab.icon size={18} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          title="Total Users" 
-          value={stats.totalUsers} 
-          icon={Users} 
-          color="text-blue-500"
-        />
-        <StatCard 
-          title="Total Tickets" 
-          value={stats.totalTickets} 
-          icon={Ticket} 
-          color="text-purple-500"
-        />
-        <StatCard 
-          title="Subscribed Users" 
-          value={stats.subscribedUsers} 
-          icon={Crown} 
-          color="text-yellow-500"
-        />
-        <StatCard 
-          title="Completion Rate" 
-          value={`${stats.totalTickets ? Math.round((stats.completedTickets / stats.totalTickets) * 100) : 0}%`} 
-          icon={Activity} 
-          color="text-green-500"
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Left Column - Charts */}
-        <div className="xl:col-span-2 space-y-8">
-          {/* Main Chart */}
-          <div className="bg-base-100 rounded-2xl shadow-lg p-6 border border-base-300/30">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                System Overview
-              </h2>
-              <div className="flex gap-2">
-                <button className="btn btn-sm btn-outline">Week</button>
-                <button className="btn btn-sm btn-primary">Month</button>
-                <button className="btn btn-sm btn-outline">Year</button>
+          {activeTab === 'overview' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard title="Total Users" value={stats.totalUsers} icon={Users} color="blue" loading={isDataLoading} />
+                <StatCard title="Total Tickets" value={stats.totalTickets} icon={Ticket} color="purple" loading={isDataLoading} />
+                <StatCard title="Subscribed Users" value={stats.subscribedUsers} icon={Crown} color="yellow" loading={isDataLoading} />
+                <StatCard title="Completion Rate" value={`${stats.completionRate}%`} icon={Activity} color="green" loading={isDataLoading} />
               </div>
-            </div>
-            <div className="h-80">
-              <Bar data={chartData} options={chartOptions} />
-            </div>
-          </div>
 
-          {/* Subscription Chart */}
-          <div className="bg-base-100 rounded-2xl shadow-lg p-6 border border-base-300/30">
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <Crown className="w-5 h-5" />
-              Subscription Distribution
-            </h2>
-            <div className="h-64 flex items-center justify-center">
-              <Doughnut 
-                data={subscriptionData} 
-                options={{
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        color: 'rgba(100, 100, 100, 0.8)',
-                        font: { size: 12 }
-                      }
-                    }
-                  }
-                }} 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Side Panels */}
-        <div className="space-y-8">
-          {/* Recent Tickets */}
-          <div className="bg-base-100 rounded-2xl shadow-lg p-6 border border-base-300/30">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Ticket className="w-5 h-5" />
-                Recent Tickets
-              </h2>
-              <span className="badge badge-primary">{stats.totalTickets}</span>
-            </div>
-            
-            {isFetchingTickets ? (
-              <div className="text-center py-8">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-base-content/60 mt-2">Loading tickets...</p>
-              </div>
-            ) : ticketsError ? (
-              <div className="text-center py-8">
-                <p className="text-error">Failed to load tickets</p>
-              </div>
-            ) : tickets.length > 0 ? (
-              <div className="space-y-4">
-                {tickets.slice(0, 5).map((ticket) => (
-                  <div
-                    key={ticket._id}
-                    className={`p-4 rounded-xl border-2 transition-all hover:shadow-md ${
-                      ticket.status === "completed" || ticket.status === "complete" 
-                        ? "border-success/20 bg-success/5" 
-                        : "border-warning/20 bg-warning/5"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-base-content line-clamp-1 flex-1">{ticket.title}</h3>
-                      <span className={`badge badge-sm ml-2 ${
-                        ticket.status === "completed" || ticket.status === "complete" 
-                          ? "badge-success" 
-                          : "badge-warning"
-                      }`}>
-                        {ticket.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-base-content/60 line-clamp-2 mb-2">{ticket.description}</p>
-                    <div className="flex justify-between items-center text-xs text-base-content/50">
-                      <span>By: {ticket.createdBy?.fullName || "Unknown"}</span>
-                      <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <DashboardCard title="System Overview" icon={BarChart3} className="xl:col-span-2">
+                  <div className="flex justify-end mb-4">
+                    <div className="btn-group">
+                      {['Week', 'Month', 'Year'].map(range => (
+                        <button key={range} onClick={() => setChartTimeRange(range)} className={`btn btn-sm ${chartTimeRange === range ? 'btn-active' : 'btn-ghost'}`}>{range}</button>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Ticket className="w-12 h-12 text-base-content/30 mx-auto mb-3" />
-                <p className="text-base-content/60">No tickets found.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Top Performers */}
-          <div className="bg-base-100 rounded-2xl shadow-lg p-6 border border-base-300/30">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Crown className="w-5 h-5" />
-                Top Performers
-              </h2>
-              <span className="badge badge-secondary">{leaderboard.length}</span>
-            </div>
-            
-            {isFetchingLeaderboard ? (
-              <div className="text-center py-8">
-                <span className="loading loading-spinner loading-lg text-secondary"></span>
-                <p className="text-base-content/60 mt-2">Loading leaderboard...</p>
-              </div>
-            ) : leaderboardError ? (
-              <div className="text-center py-8">
-                <p className="text-error">Failed to load leaderboard</p>
-              </div>
-            ) : leaderboard.length > 0 ? (
-              <div className="space-y-3">
-                {leaderboard.slice(0, 5).map((user, index) => (
-                  <div
-                    key={user.userId}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-base-300/30 hover:bg-base-200/50 transition-all group"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                        index === 0 ? 'bg-yellow-500' : 
-                        index === 1 ? 'bg-gray-400' : 
-                        index === 2 ? 'bg-orange-500' : 'bg-blue-500'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-base-300 overflow-hidden">
-                          <img
-                            src={user.profilePic || "/placeholder.svg?height=32&width=32"}
-                            alt={user.fullName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base-content truncate">{user.fullName}</h3>
-                          <p className="text-xs text-base-content/60 truncate">
-                            {user.totalPoints || 0} points • {user.tickets?.length || 0} tickets
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="h-80">
+                    <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
                   </div>
-                ))}
+                </DashboardCard>
+                <DashboardCard title="Subscription Distribution" icon={Crown}>
+                  <div className="h-80 flex items-center justify-center">
+                    <Doughnut data={doughnutChartData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+                  </div>
+                </DashboardCard>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <Crown className="w-12 h-12 text-base-content/30 mx-auto mb-3" />
-                <p className="text-base-content/60">No leaderboard data available.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Add User Modal */}
-      <AnimatePresence>
-        {showAddUserForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-base-100 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Add New User
-                </h2>
-                <button 
-                  onClick={() => setShowAddUserForm(false)}
-                  className="btn btn-ghost btn-sm btn-circle"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <form onSubmit={handleAddUser} className="space-y-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Full Name</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={newUser.fullName}
-                    onChange={handleInputChange}
-                    className="input input-bordered w-full"
-                    required
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Email</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={newUser.email}
-                    onChange={handleInputChange}
-                    className="input input-bordered w-full"
-                    required
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Phone (Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={newUser.phone}
-                    onChange={handleInputChange}
-                    className="input input-bordered w-full"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Password</span>
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={newUser.password}
-                    onChange={handleInputChange}
-                    className="input input-bordered w-full"
-                    required
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Role</span>
-                  </label>
-                  <select
-                    name="role"
-                    value={newUser.role}
-                    onChange={handleInputChange}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <button type="submit" className="btn btn-success flex-1 gap-2">
-                    <UserPlus size={18} />
-                    Create User
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowAddUserForm(false)} 
-                    className="btn btn-ghost"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeTab === 'users' && (
+            <UserTable
+              users={users}
+              loading={loadingUsers}
+              onDelete={handleDeleteRequest}
+              onViewProfile={handleViewProfile}
+            />
+          )}
+        </motion.div>
       </AnimatePresence>
     </div>
   )

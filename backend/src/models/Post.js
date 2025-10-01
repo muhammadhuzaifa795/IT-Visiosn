@@ -27,6 +27,19 @@ const postSchema = new Schema(
       },
     ],
 
+    views: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        viewedAt: {
+          type: Date,
+          default: Date.now,
+        }
+      }
+    ],
+
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

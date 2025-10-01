@@ -1,49 +1,132 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams, useNavigate } from "react-router"
 import { Toaster, toast } from "react-hot-toast"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
-  ArrowLeft,
-  Trash2,
-  Heart,
-  MessageCircle,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  Mail,
-  Phone,
-  Crown,
-  Shield,
-  User,
-  Ticket,
-  Award,
-  BarChart3,
-  FileText,
-  Video,
-  Image,
-  Download,
-  Ban,
-  UserCheck,
-  RefreshCw
+  ArrowLeft, Trash2, Heart, MessageCircle, Calendar, ChevronDown, ChevronUp, Mail,
+  Phone, Crown, Shield, Ticket, Award, BarChart3, FileText, Ban, UserCheck, RefreshCw,
+  Image as ImageIcon, Video, Download, User as UserIcon
 } from "lucide-react"
 import useTickets from "../hooks/useTicket"
 import useLeaderboard from "../hooks/useLeaderboard"
 import { getUserById, getPostsByUserId, deletePost, toggleBanUser } from "../lib/api"
-import { useMutation } from "@tanstack/react-query"
 import { useAdminClearSubscription } from "../hooks/useSubscription"
 
+// --- Helper Functions ---
+const formatDate = (dateString) => new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+const getTimeAgo = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now - date) / 1000)
+  if (diffInSeconds < 60) return "just now"
+  const minutes = Math.floor(diffInSeconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  return formatDate(dateString)
+}
+
+// --- Reusable UI Components ---
+const LoadingSpinner = ({ text }) => (
+  <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+    <span className="loading loading-spinner loading-lg text-primary"></span>
+    <p className="mt-4 text-base-content/60">{text}</p>
+  </div>
+)
+
+const EmptyState = ({ icon: Icon, title, message }) => (
+  <div className="text-center py-16 bg-base-200/50 rounded-lg">
+    <Icon className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
+    <h4 className="text-lg font-semibold mb-2 text-base-content/70">{title}</h4>
+    <p className="text-base-content/50 max-w-sm mx-auto">{message}</p>
+  </div>
+)
+
+const StatCard = ({ icon: Icon, value, label, color }) => (
+  <div className="card bg-base-100 shadow-md border border-base-300/30 transition-all hover:shadow-lg hover:-translate-y-1">
+    <div className="card-body p-4 items-center text-center">
+      <Icon className={`w-8 h-8 ${color} mb-2`} />
+      <div className="text-3xl font-bold text-base-content">{value}</div>
+      <div className="text-sm text-base-content/60 mt-1">{label}</div>
+    </div>
+  </div>
+)
+
+const PostCard = ({ post, onDelete }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const shouldTruncate = post.description && post.description.length > 200
+
+  return (
+    <div className="card bg-base-200 shadow-sm border border-base-300/30">
+      <div className="card-body p-5">
+        <div className="flex justify-between items-start gap-4 mb-3">
+          <h4 className="card-title text-lg text-base-content">{post.title}</h4>
+          <button onClick={() => onDelete(post._id)} className="btn btn-error btn-sm btn-circle btn-ghost" title="Delete Post">
+            <Trash2 size={16} />
+          </button>
+        </div>
+        
+        {post.description && (
+          <div className="mb-4">
+            <p className="text-base-content/80 leading-relaxed whitespace-pre-wrap">
+              {isExpanded ? post.description : `${post.description.substring(0, 200)}${shouldTruncate ? '...' : ''}`}
+            </p>
+            {shouldTruncate && (
+              <button onClick={() => setIsExpanded(!isExpanded)} className="text-primary text-sm font-semibold hover:underline mt-2 flex items-center gap-1">
+                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {isExpanded ? "Show Less" : "Read More"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {post.attachments?.url && (
+          <div className="mb-4">
+            {post.attachments.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+              <img src={post.attachments.url} alt="Post attachment" className="rounded-lg max-h-72 object-cover border border-base-300" />
+            ) : post.attachments.url.match(/\.(mp4|webm|ogg)$/i) ? (
+              <video controls className="rounded-lg max-h-72 border border-base-300">
+                <source src={post.attachments.url} type="video/mp4" />
+              </video>
+            ) : (
+              <a href={post.attachments.url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm gap-2">
+                <Download size={14} />
+                {post.attachments.url.split("/").pop()}
+              </a>
+            )}
+          </div>
+        )}
+
+        <div className="card-actions justify-between items-center mt-2">
+          <div className="flex items-center gap-4 text-sm text-base-content/60">
+            <span className="flex items-center gap-1.5"><Heart size={14} /> {post.likes?.length || 0}</span>
+            <span className="flex items-center gap-1.5"><MessageCircle size={14} /> {post.comments?.length || 0}</span>
+          </div>
+          <div className="text-xs text-base-content/50">{getTimeAgo(post.createdAt)}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Main Page Component ---
 const AdminUserProfile = () => {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
   const [user, setUser] = useState(null)
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [postsLoading, setPostsLoading] = useState(true)
-  const [expandedPosts, setExpandedPosts] = useState(new Set())
   const [activeTab, setActiveTab] = useState("overview")
-  const { tickets, isFetching: isFetchingTickets, fetchError: ticketsError } = useTickets()
-  const { leaderboard, isFetching: isFetchingLeaderboard, fetchError: leaderboardError } = useLeaderboard()
+
+  const { tickets = [], isFetching: isFetchingTickets, error: ticketsError } = useTickets()
+  const { leaderboard = [], isFetching: isFetchingLeaderboard, error: leaderboardError } = useLeaderboard()
   const { clear: clearSubscription, isPending: isClearPending } = useAdminClearSubscription()
 
   const { mutate: banMutation, isPending: isBanPending } = useMutation({
@@ -51,52 +134,41 @@ const AdminUserProfile = () => {
     onSuccess: (data) => {
       toast.success(data.message)
       setUser(data.user)
+      queryClient.invalidateQueries(['users'])
     },
-    onError: () => {
-      toast.error("Failed to update user ban status")
-    }
+    onError: (err) => toast.error(err.message || "Failed to update ban status"),
   })
 
-  const fetchUser = async () => {
-    try {
-      const userData = await getUserById(userId)
-      setUser(userData.user)
-    } catch (error) {
-      console.error("Error fetching user:", error)
-      toast.error("Failed to fetch user details")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchUserPosts = async () => {
-    try {
-      console.log("[v0] Fetching posts for userId:", userId)
-      const userPosts = await getPostsByUserId(userId)
-      console.log("[v0] User posts received:", userPosts)
-      console.log("[v0] User posts length:", userPosts?.length)
-      setPosts(userPosts || [])
-    } catch (error) {
-      console.error("Error fetching user posts:", error)
-      toast.error("Failed to fetch user posts")
-    } finally {
-      setPostsLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchUser()
-    fetchUserPosts()
-  }, [userId])
-
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setPostsLoading(true)
+        const [userData, userPosts] = await Promise.all([
+          getUserById(userId),
+          getPostsByUserId(userId)
+        ])
+        setUser(userData.user)
+        setPosts(userPosts || [])
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+        toast.error("Failed to fetch user details or posts")
+        navigate("/admin/users")
+      } finally {
+        setLoading(false)
+        setPostsLoading(false)
+      }
+    }
+    fetchData()
+  }, [userId, navigate])
+  
   const handleDeletePost = async (postId) => {
-    if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+    if (window.confirm("Are you sure you want to permanently delete this post?")) {
       try {
         await deletePost(postId)
         setPosts(posts.filter((post) => post._id !== postId))
         toast.success("Post deleted successfully!")
       } catch (error) {
-        console.error("Error deleting post:", error)
         toast.error("Failed to delete post")
       }
     }
@@ -104,535 +176,194 @@ const AdminUserProfile = () => {
 
   const handleToggleBan = () => {
     if (!user.isBanned) {
-      const reason = prompt("Enter reason for banning this user:")
-      if (!reason) return toast.error("Ban reason is required")
-      if (!confirm(`Are you sure you want to ban this user?\nReason: ${reason}`)) return
-      banMutation({ userId, isBanned: true, reason })
+      const reason = prompt("Enter a reason for banning this user:")
+      if (!reason) return toast.error("Ban reason is required.")
+      if (window.confirm(`Are you sure you want to ban this user for: ${reason}?`)) {
+        banMutation({ userId, isBanned: true, reason })
+      }
     } else {
-      if (!confirm("Are you sure you want to unban this user?")) return
-      banMutation({ userId, isBanned: false })
-    }
-  }
-
-  const handleClearSubscription = async () => {
-    if (window.confirm("Are you sure you want to clear this user's subscription? This will downgrade them to free plan.")) {
-      try {
-        await clearSubscription(userId)
-        toast.success("Subscription cleared successfully!")
-        fetchUser() // Refresh user data
-      } catch (err) {
-        toast.error("Failed to clear subscription")
+      if (window.confirm("Are you sure you want to unban this user?")) {
+        banMutation({ userId, isBanned: false })
       }
     }
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const getTimeAgo = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now - date) / 1000)
-
-    if (diffInSeconds < 60) return 'just now'
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`
-    return formatDate(dateString)
-  }
-
-  const togglePostExpansion = (postId) => {
-    const newExpanded = new Set(expandedPosts)
-    if (newExpanded.has(postId)) {
-      newExpanded.delete(postId)
-    } else {
-      newExpanded.add(postId)
+  const handleClearSubscription = async () => {
+    if (window.confirm("Are you sure? This will downgrade the user to the free plan immediately.")) {
+      try {
+        await clearSubscription(userId)
+        setUser(prev => ({...prev, subscription: 'free', subscriptionExpiresAt: null}))
+        toast.success("Subscription cleared successfully!")
+      } catch (err) {
+        toast.error("Failed to clear subscription.")
+      }
     }
-    setExpandedPosts(newExpanded)
   }
+  
+  const userTickets = useMemo(() => tickets.filter((ticket) => ticket.createdBy?._id === userId), [tickets, userId])
+  const leaderboardEntry = useMemo(() => leaderboard.find((entry) => entry.userId === userId), [leaderboard, userId])
+  const userRank = useMemo(() => leaderboard.findIndex((entry) => entry.userId === userId) + 1, [leaderboard, userId])
 
-  const truncateText = (text, maxLength = 150) => {
-    if (!text || text.length <= maxLength) return text
-    return text.substring(0, maxLength) + "..."
-  }
-
-  const getSubscriptionBadge = (subscription) => {
-    const badges = {
-      free: "badge-ghost",
-      monthly: "badge-primary",
-      yearly: "badge-secondary"
-    }
-    return badges[subscription] || "badge-ghost"
-  }
-
-  const getSubscriptionText = (subscription) => {
-    const texts = {
-      free: "Free",
-      monthly: "Monthly Pro",
-      yearly: "Yearly Pro"
-    }
-    return texts[subscription] || "Free"
-  }
-
-  // Filter user-specific tickets
-  const userTickets = tickets.filter((ticket) => ticket.createdBy?._id === userId)
-
-  // Find user in leaderboard
-  const userLeaderboard = leaderboard.find((entry) => entry.userId === userId)
-  const userRank = leaderboard.findIndex((entry) => entry.userId === userId) + 1
-
-  // Calculate user stats
-  const userStats = {
+  const userStats = useMemo(() => ({
     totalPosts: posts.length,
     totalTickets: userTickets.length,
-    completedTickets: userTickets.filter(t => t.status === "completed" || t.status === "complete").length,
     totalLikes: posts.reduce((sum, post) => sum + (post.likes?.length || 0), 0),
-    totalComments: posts.reduce((sum, post) => sum + (post.comments?.length || 0), 0),
-  }
+    rank: userRank > 0 ? `#${userRank}` : 'N/A',
+  }), [posts, userTickets, userRank])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content/60">Loading user profile...</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner text="Loading user profile..." />
   }
-
+  
+  const TABS = [
+    { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "posts", label: `Posts (${posts.length})`, icon: FileText },
+    { id: "tickets", label: `Tickets (${userTickets.length})`, icon: Ticket },
+    { id: "leaderboard", label: "Leaderboard", icon: Award },
+  ]
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 p-6">
+    <div className="min-h-screen bg-base-200/50 p-4 sm:p-6 lg:p-8">
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/admin/users")}
-            className="btn btn-ghost btn-circle hover:bg-base-300/50 transition-all"
-          >
-            <ArrowLeft size={20} />
+          <button onClick={() => navigate(-1)} className="btn btn-ghost btn-circle">
+            <ArrowLeft size={24} />
           </button>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              User Profile
-            </h1>
-            <p className="text-base-content/60 mt-1">Manage and view user details</p>
+            <h1 className="text-3xl font-bold text-base-content">User Profile</h1>
+            <p className="text-base-content/60 mt-1">Manage user activity and details</p>
           </div>
         </div>
-
         {user && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-end sm:self-center">
             {user.subscription !== "free" && (
-              <button
-                onClick={handleClearSubscription}
-                className="btn btn-warning btn-sm gap-2"
-                disabled={isClearPending}
-              >
-                <RefreshCw size={16} />
-                Clear Sub
+              <button onClick={handleClearSubscription} className="btn btn-warning btn-sm gap-2" disabled={isClearPending}>
+                <RefreshCw size={16} /> Clear Subscription
               </button>
             )}
-            <button
-              onClick={handleToggleBan}
-              className={`btn btn-sm gap-2 ${user.isBanned ? "btn-success" : "btn-error"}`}
-              disabled={isBanPending}
-            >
-              {user.isBanned ? <UserCheck size={16} /> : <Ban size={16} />}
-              {user.isBanned ? "Unban" : "Ban"}
+            <button onClick={handleToggleBan} className={`btn btn-sm gap-2 ${user.isBanned ? "btn-success" : "btn-error"}`} disabled={isBanPending}>
+              {user.isBanned ? <><UserCheck size={16} /> Unban</> : <><Ban size={16} /> Ban User</>}
             </button>
           </div>
         )}
-      </div>
+      </header>
 
       {user && (
-        <div className="space-y-6">
-          {/* User Overview Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* User Profile Card */}
-            <div className="lg:col-span-1">
-              <div className="card bg-base-100 shadow-xl border border-base-300/30">
-                <div className="card-body items-center text-center">
-                  <div className="avatar mb-4">
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Sidebar - User Info */}
+          <aside className="lg:col-span-4 xl:col-span-3">
+            <div className="card bg-base-100 shadow-xl border border-base-300/30 p-6 sticky top-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="avatar mb-4">
+                  <div className="w-28 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                     {user.profilePic ? (
-                      <div className="w-24 rounded-full overflow-hidden">
-                        <img src={user.profilePic} alt={user.fullName || "User"} />
-                      </div>
+                      <img src={user.profilePic} alt={user.fullName} />
                     ) : (
-                      <div className="bg-gradient-to-br from-primary to-secondary text-primary-content rounded-full w-24 h-24 flex items-center justify-center">
-                        <span className="text-2xl font-bold">
-                          {user.fullName?.charAt(0)?.toUpperCase() || user.fullname?.charAt(0)?.toUpperCase() || "U"}
-                        </span>
+                      <div className="bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center w-full h-full">
+                        <span className="text-4xl font-bold">{user.fullName?.charAt(0)?.toUpperCase() || "U"}</span>
                       </div>
                     )}
                   </div>
-
-
-                  <h2 className="card-title text-xl mb-2">{user.fullName || user.fullname}</h2>
-
-                  <div className="space-y-2 w-full">
-                    <div className="flex items-center gap-2 text-sm text-base-content/70">
-                      <Mail className="w-4 h-4" />
-                      <span className="truncate">{user.email}</span>
-                    </div>
-                    {user.phone && (
-                      <div className="flex items-center gap-2 text-sm text-base-content/70">
-                        <Phone className="w-4 h-4" />
-                        <span>{user.phone}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-base-content/70">
-                      <Calendar className="w-4 h-4" />
-                      <span>Joined {formatDate(user.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                    <span className={`badge ${user.role === "admin" ? "badge-primary" : "badge-ghost"}`}>
-                      <Shield className="w-3 h-3 mr-1" />
-                      {user.role}
-                    </span>
-                    <span className={`badge ${getSubscriptionBadge(user.subscription)}`}>
-                      <Crown className="w-3 h-3 mr-1" />
-                      {getSubscriptionText(user.subscription)}
-                    </span>
-                    <span className={`badge ${user.isBanned ? "badge-error" : "badge-success"}`}>
-                      {user.isBanned ? "Banned" : "Active"}
-                    </span>
-                  </div>
-
-                  {user.subscriptionExpiresAt && user.subscription !== "free" && (
-                    <div className="mt-3 p-2 bg-warning/10 rounded-lg border border-warning/20">
-                      <p className="text-xs text-warning flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        Subscription expires {new Date(user.subscriptionExpiresAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
+                </div>
+                <h2 className="text-2xl font-bold mb-1">{user.fullName}</h2>
+                <p className="text-base-content/60">@{user.username || 'username'}</p>
+                <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                  <span className="badge badge-lg badge-outline gap-1.5"><Shield size={12} /> {user.role}</span>
+                  <span className={`badge badge-lg ${user.isBanned ? 'badge-error' : 'badge-success'}`}>{user.isBanned ? "Banned" : "Active"}</span>
                 </div>
               </div>
+              <div className="divider my-6">Details</div>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-3"><Mail size={16} className="text-base-content/60" /> <span className="truncate">{user.email}</span></div>
+                {user.phone && <div className="flex items-center gap-3"><Phone size={16} className="text-base-content/60" /> <span>{user.phone}</span></div>}
+                <div className="flex items-center gap-3"><Calendar size={16} className="text-base-content/60" /> <span>Joined {formatDate(user.createdAt)}</span></div>
+                <div className="flex items-center gap-3"><Crown size={16} className="text-base-content/60" /> <span>{user.subscription} Plan</span></div>
+              </div>
+              {user.subscription !== 'free' && user.subscriptionExpiresAt &&
+                <div className="mt-4 p-3 bg-info/10 rounded-lg text-center text-xs text-info">
+                  Subscription expires on {formatDate(user.subscriptionExpiresAt)}
+                </div>
+              }
+            </div>
+          </aside>
+
+          {/* Right Content - Tabs */}
+          <section className="lg:col-span-8 xl:col-span-9">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <StatCard icon={FileText} value={userStats.totalPosts} label="Posts Created" color="text-info" />
+              <StatCard icon={Ticket} value={userStats.totalTickets} label="Tickets Raised" color="text-accent" />
+              <StatCard icon={Heart} value={userStats.totalLikes} label="Likes Received" color="text-error" />
+              <StatCard icon={Award} value={userStats.rank} label="Leaderboard Rank" color="text-warning" />
+            </div>
+            
+            <div className="tabs tabs-boxed bg-base-100/80 mb-6 backdrop-blur-sm">
+              {TABS.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab tab-lg gap-2 ${activeTab === tab.id ? "tab-active !bg-primary !text-primary-content" : ""}`}>
+                  <tab.icon size={18} /> {tab.label}
+                </button>
+              ))}
             </div>
 
-            {/* Stats Cards */}
-            <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="card bg-base-100 shadow-lg border border-base-300/30">
-                <div className="card-body p-4 text-center">
-                  <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-base-content">{userStats.totalPosts}</div>
-                  <div className="text-sm text-base-content/60">Total Posts</div>
-                </div>
-              </div>
-
-              <div className="card bg-base-100 shadow-lg border border-base-300/30">
-                <div className="card-body p-4 text-center">
-                  <Ticket className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-base-content">{userStats.totalTickets}</div>
-                  <div className="text-sm text-base-content/60">Tickets</div>
-                </div>
-              </div>
-
-              <div className="card bg-base-100 shadow-lg border border-base-300/30">
-                <div className="card-body p-4 text-center">
-                  <Heart className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-base-content">{userStats.totalLikes}</div>
-                  <div className="text-sm text-base-content/60">Total Likes</div>
-                </div>
-              </div>
-
-              <div className="card bg-base-100 shadow-lg border border-base-300/30">
-                <div className="card-body p-4 text-center">
-                  <Award className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-base-content">{userRank || "-"}</div>
-                  <div className="text-sm text-base-content/60">Leaderboard Rank</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="tabs tabs-boxed bg-base-200 p-1 rounded-xl w-fit">
-            {[
-              { id: "overview", label: "Overview", icon: BarChart3 },
-              { id: "posts", label: "Posts", icon: FileText },
-              { id: "tickets", label: "Tickets", icon: Ticket },
-              { id: "leaderboard", label: "Leaderboard", icon: Award }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`tab gap-2 ${activeTab === tab.id ? 'tab-active' : ''}`}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Posts Tab */}
-          {activeTab === "posts" && (
             <div className="card bg-base-100 shadow-lg border border-base-300/30">
               <div className="card-body">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    User Posts ({posts.length})
-                  </h3>
-                  <div className="text-sm text-base-content/60">
-                    {userStats.totalLikes} likes • {userStats.totalComments} comments
-                  </div>
-                </div>
-
-                {postsLoading ? (
-                  <div className="text-center py-12">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-4 text-base-content/60">Loading posts...</p>
-                  </div>
-                ) : posts.length > 0 ? (
-                  <div className="space-y-4">
-                    {posts.map((post) => {
-                      const isExpanded = expandedPosts.has(post._id)
-                      const shouldTruncate = post.description && post.description.length > 150
-
-                      return (
-                        <div key={post._id} className="card bg-base-200 shadow-sm border border-base-300/30 hover:shadow-md transition-all">
-                          <div className="card-body">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-3">
-                                  <h4 className="font-semibold text-lg text-base-content line-clamp-2">{post.title}</h4>
-                                  <button
-                                    onClick={() => handleDeletePost(post._id)}
-                                    className="btn btn-error btn-sm btn-square flex-shrink-0"
-                                    title="Delete Post"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-
-                                {post.description && (
-                                  <div className="mb-3">
-                                    <p className="text-base-content/80 leading-relaxed">
-                                      {isExpanded || !shouldTruncate ? post.description : truncateText(post.description)}
-                                    </p>
-                                    {shouldTruncate && (
-                                      <button
-                                        onClick={() => togglePostExpansion(post._id)}
-                                        className="text-primary text-sm font-medium hover:underline mt-2 flex items-center gap-1"
-                                      >
-                                        {isExpanded ? (
-                                          <>
-                                            <ChevronUp size={14} />
-                                            Show less
-                                          </>
-                                        ) : (
-                                          <>
-                                            <ChevronDown size={14} />
-                                            Read more
-                                          </>
-                                        )}
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Media Attachments */}
-                                {post.attachments?.url && (
-                                  <div className="mb-3">
-                                    {post.attachments.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                                      <div className="flex items-center gap-2">
-                                        <Image className="w-4 h-4 text-green-500" />
-                                        <img
-                                          src={post.attachments.url || "/placeholder.svg"}
-                                          alt="Post attachment"
-                                          className="rounded-lg max-w-xs h-32 object-cover border border-base-300"
-                                        />
-                                      </div>
-                                    ) : post.attachments.url.match(/\.(mp4|webm|ogg)$/i) ? (
-                                      <div className="flex items-center gap-2">
-                                        <Video className="w-4 h-4 text-blue-500" />
-                                        <video controls className="rounded-lg max-w-xs h-32 border border-base-300">
-                                          <source src={post.attachments.url} type="video/mp4" />
-                                        </video>
-                                      </div>
-                                    ) : (
-                                      <div className="badge badge-outline gap-2">
-                                        <Download size={12} />
-                                        {post.attachments.url.split("/").pop()}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Post Stats and Meta */}
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-4 text-sm text-base-content/60">
-                                    <span className="flex items-center gap-1">
-                                      <Heart size={14} />
-                                      {post.likes?.length || 0} likes
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <MessageCircle size={14} />
-                                      {post.comments?.length || 0} comments
-                                    </span>
-                                  </div>
-                                  <div className="text-xs text-base-content/50">
-                                    {getTimeAgo(post.createdAt)}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <FileText className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold mb-2 text-base-content/70">No Posts Yet</h4>
-                    <p className="text-base-content/50">This user hasn't created any posts.</p>
-                  </div>
+                {activeTab === "overview" && (
+                    <div className="prose max-w-none">
+                        <h3 className="font-semibold text-xl mb-4">User Overview</h3>
+                        <p>This section provides a summary of the user's activities and status. You can navigate through the tabs to view their specific posts, support tickets, and leaderboard performance.</p>
+                        <ul>
+                            <li><strong>Posts:</strong> View all content created by the user. You can delete posts if they violate community guidelines.</li>
+                            <li><strong>Tickets:</strong> Review all support tickets submitted by the user and their current status.</li>
+                            <li><strong>Leaderboard:</strong> Check the user's ranking and points based on their contributions.</li>
+                        </ul>
+                        <p>Use the action buttons in the header to manage the user's account, such as applying a ban or clearing their active subscription.</p>
+                    </div>
+                )}
+                {activeTab === "posts" && (
+                  postsLoading ? <LoadingSpinner text="Loading posts..." /> :
+                  posts.length > 0 ? <div className="space-y-4">{posts.map(post => <PostCard key={post._id} post={post} onDelete={handleDeletePost} />)}</div> :
+                  <EmptyState icon={FileText} title="No Posts Found" message="This user hasn't created any posts yet." />
+                )}
+                {activeTab === "tickets" && (
+                  isFetchingTickets ? <LoadingSpinner text="Loading tickets..." /> :
+                  ticketsError ? <EmptyState icon={Ticket} title="Error" message="Could not load user tickets." /> :
+                  userTickets.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="table table-zebra w-full">
+                        <thead><tr><th>Title</th><th>Status</th><th>Created</th></tr></thead>
+                        <tbody>
+                          {userTickets.map(ticket => (
+                            <tr key={ticket._id}>
+                              <td>
+                                <div className="font-bold">{ticket.title}</div>
+                                <div className="text-sm opacity-60 max-w-md truncate">{ticket.description}</div>
+                              </td>
+                              <td><span className={`badge ${ticket.status.toLowerCase().includes('complete') ? 'badge-success' : 'badge-warning'}`}>{ticket.status}</span></td>
+                              <td>{getTimeAgo(ticket.createdAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : <EmptyState icon={Ticket} title="No Tickets Found" message="This user hasn't submitted any support tickets." />
+                )}
+                {activeTab === "leaderboard" && (
+                  isFetchingLeaderboard ? <LoadingSpinner text="Loading leaderboard..." /> :
+                  leaderboardError ? <EmptyState icon={Award} title="Error" message="Could not load leaderboard data." /> :
+                  leaderboardEntry ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                        <div className="p-6 bg-base-200/60 rounded-lg"><div className="text-4xl font-extrabold text-warning">#{userRank}</div><div className="mt-2 text-base-content/70">Current Rank</div></div>
+                        <div className="p-6 bg-base-200/60 rounded-lg"><div className="text-4xl font-extrabold text-info">{leaderboardEntry.totalPoints || 0}</div><div className="mt-2 text-base-content/70">Total Points</div></div>
+                        <div className="p-6 bg-base-200/60 rounded-lg"><div className="text-4xl font-extrabold text-success">{leaderboardEntry.tickets?.length || 0}</div><div className="mt-2 text-base-content/70">Tickets Solved</div></div>
+                    </div>
+                  ) : <EmptyState icon={Award} title="Not on Leaderboard" message="This user is not currently ranked on the leaderboard." />
                 )}
               </div>
             </div>
-          )}
-
-          {/* Tickets Tab */}
-          {activeTab === "tickets" && (
-            <div className="card bg-base-100 shadow-lg border border-base-300/30">
-              <div className="card-body">
-                <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <Ticket className="w-5 h-5" />
-                  User Tickets ({userTickets.length})
-                </h3>
-
-                {isFetchingTickets ? (
-                  <div className="text-center py-12">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-4 text-base-content/60">Loading tickets...</p>
-                  </div>
-                ) : ticketsError ? (
-                  <div className="text-center py-12">
-                    <div className="text-error mb-4">❌</div>
-                    <h4 className="text-lg font-semibold mb-2 text-error">Error Loading Tickets</h4>
-                    <p className="text-base-content/60">Failed to load user tickets.</p>
-                  </div>
-                ) : userTickets.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
-                      <thead className="bg-base-200/50">
-                        <tr>
-                          <th className="px-6 py-4 text-left font-semibold">Title</th>
-                          <th className="px-6 py-4 text-left font-semibold">Description</th>
-                          <th className="px-6 py-4 text-left font-semibold">Status</th>
-                          <th className="px-6 py-4 text-left font-semibold">Created</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {userTickets.map((ticket) => (
-                          <tr key={ticket._id} className="hover:bg-base-200/30 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-medium text-base-content">{ticket.title}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-base-content/70 max-w-md line-clamp-2">
-                                {ticket.description}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`badge badge-lg ${ticket.status === "completed" || ticket.status === "complete"
-                                  ? "badge-success"
-                                  : "badge-warning"
-                                }`}>
-                                {ticket.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-base-content/60">
-                                {getTimeAgo(ticket.createdAt)}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <Ticket className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold mb-2 text-base-content/70">No Tickets Yet</h4>
-                    <p className="text-base-content/50">This user hasn't created any support tickets.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Leaderboard Tab */}
-          {activeTab === "leaderboard" && (
-            <div className="card bg-base-100 shadow-lg border border-base-300/30">
-              <div className="card-body">
-                <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Leaderboard Performance
-                </h3>
-
-                {isFetchingLeaderboard ? (
-                  <div className="text-center py-12">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="mt-4 text-base-content/60">Loading leaderboard data...</p>
-                  </div>
-                ) : leaderboardError ? (
-                  <div className="text-center py-12">
-                    <div className="text-error mb-4">❌</div>
-                    <h4 className="text-lg font-semibold mb-2 text-error">Error Loading Data</h4>
-                    <p className="text-base-content/60">Failed to load leaderboard information.</p>
-                  </div>
-                ) : userLeaderboard ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="card bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border border-yellow-500/20">
-                      <div className="card-body text-center">
-                        <Award className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                        <div className="text-3xl font-bold text-base-content">#{userRank}</div>
-                        <div className="text-base-content/60">Current Rank</div>
-                      </div>
-                    </div>
-
-                    <div className="card bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20">
-                      <div className="card-body text-center">
-                        <BarChart3 className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                        <div className="text-3xl font-bold text-base-content">{userLeaderboard.totalPoints || 0}</div>
-                        <div className="text-base-content/60">Total Points</div>
-                      </div>
-                    </div>
-
-                    <div className="card bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20">
-                      <div className="card-body text-center">
-                        <Ticket className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                        <div className="text-3xl font-bold text-base-content">{userLeaderboard.tickets?.length || 0}</div>
-                        <div className="text-base-content/60">Tickets Solved</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <Award className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold mb-2 text-base-content/70">Not on Leaderboard</h4>
-                    <p className="text-base-content/50">This user is not currently ranked on the leaderboard.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+          </section>
+        </main>
       )}
     </div>
   )
