@@ -30,6 +30,8 @@ import TicketDetailPage from "./pages/TicketDetailPage.jsx";
 import RoadmapPage from "./pages/RoadeMapPage.jsx";
 import UserContacts from "./pages/ContactPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import ResumePage from "./pages/ResumePage.jsx";
+import ReportDetailPage from "./pages/ReportDetailPage.jsx";
 import SubscriptionPage from "./pages/SubscriptionPage.jsx";
 import ChatbotPage from "./pages/ChatbotPage.jsx";
 import Help from "./pages/Help.jsx";
@@ -535,6 +537,31 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <TicketDetailPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+                <Route
+          path="/resume/upload"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ResumePage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/resume/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ReportDetailPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

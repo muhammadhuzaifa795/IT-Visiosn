@@ -227,7 +227,7 @@ const PostDetail = () => {
               </div>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-base-content leading-tight mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            {/* <h1 className="text-4xl md:text-5xl font-bold text-base-content leading-tight mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               {post.title}
             </h1>
 
@@ -235,7 +235,7 @@ const PostDetail = () => {
               <p className="text-xl text-base-content/70 leading-relaxed max-w-3xl mx-auto">
                 {post.description}
               </p>
-            )}
+            )} */}
           </header>
 
           {/* Attachment in Modal */}
@@ -387,7 +387,7 @@ const PostDetail = () => {
                   </div>
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-base-content bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                {/* <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-base-content bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   {post.title}
                 </h1>
 
@@ -395,7 +395,7 @@ const PostDetail = () => {
                   <p className="text-xl text-base-content/70 leading-relaxed border-l-4 border-primary pl-6 py-2 bg-base-200/50 rounded-r-lg">
                     {post.description}
                   </p>
-                )}
+                )} */}
               </header>
 
               {/* Long Description */}
@@ -473,12 +473,12 @@ const PostDetail = () => {
                     )}
                   </button>
 
-                  <button
+                  {/* <button
                     onClick={handleBookmark}
                     className={`btn btn-ghost btn-sm gap-2 ${isBookmarked ? 'text-primary' : ''}`}
                   >
                     <BookmarkIcon className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
-                  </button>
+                  </button> */}
 
                   <button
                     onClick={handleShare}
@@ -493,15 +493,15 @@ const PostDetail = () => {
                     <EyeIcon className="w-4 h-4" />
                     <span>{viewCount} views</span>
                   </div> */}
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <MessageCircleIcon className="w-4 h-4" />
                     <span>{comments.length} comments</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
               {/* Comments Section */}
-              <section className="pt-8 border-t border-base-300/50">
+              {/* <section className="pt-8 border-t border-base-300/50">
                 <div className="flex items-center gap-3 mb-6">
                   <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                     Discussion
@@ -519,7 +519,7 @@ const PostDetail = () => {
                   setComments={setComments}
                   socket={socket}
                 />
-              </section>
+              </section> */}
 
               {/* Footer */}
               <footer className="pt-6 border-t border-base-300/50 text-sm text-base-content/60">

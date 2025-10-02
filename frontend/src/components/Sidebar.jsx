@@ -94,7 +94,7 @@ const Sidebar = () => {
   const navItems = [
     { to: "/", label: "Home", icon: HomeIcon, gradient: "from-blue-500/20 to-cyan-500/20", color: "text-blue-400" },
     { to: "/create-post", label: "Create Post", icon: PodcastIcon, gradient: "from-purple-500/20 to-pink-500/20", color: "text-purple-400" },
-    { to: "/cv-list", label: "CV", icon: FileTextIcon, gradient: "from-green-500/20 to-emerald-500/20", color: "text-green-400" },
+    // { to: "/cv-list", label: "CV", icon: FileTextIcon, gradient: "from-green-500/20 to-emerald-500/20", color: "text-green-400" },
     { to: "/ai-prompt", label: "AI Prompt", icon: Code2Icon, gradient: "from-orange-500/20 to-red-500/20", color: "text-orange-400" },
     { to: "/roadmap", label: "Road Map", icon: MapIcon, gradient: "from-indigo-500/20 to-purple-500/20", color: "text-indigo-400" },
     { to: "/interviews", label: "Mock Interview", icon: UserRound, gradient: "from-teal-500/20 to-cyan-500/20", color: "text-teal-400" },

@@ -482,3 +482,32 @@ export const clearSubscriptionByAdmin = async (userId) => {
   const res = await axiosInstance.post(`/payment/admin/clear/${userId}`);
   return res.data;
 };
+
+
+export const uploadResume = async (formData) => {
+  const res = await axiosInstance.post("/resumes/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
+// Analyze Resume (text based)
+export const analyzeResume = async ({ resumeText, jobDescription }) => {
+  const res = await axiosInstance.post(`/resumes/analyze`, {
+    resumeText,
+    jobDescription,
+  });
+  return res.data;
+};
+
+// Get all reports
+export const getReports = async () => {
+  const res = await axiosInstance.get("/resumes");
+  return res.data;
+};
+
+// Get report by ID
+export const getReportById = async (id) => {
+  const res = await axiosInstance.get(`/resume/${id}`);
+  return res.data;
+};

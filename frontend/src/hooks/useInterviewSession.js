@@ -12,18 +12,18 @@ const useInterviewSession = (interviewId, userId) => {
   const [currentQuestion, setCurrentQuestion] = useState("")
   const [transcript, setTranscript] = useState([])
   const [isConnected, setIsConnected] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(null)
+  const [interviewDuration, setInterviewDuration] = useState(null)
+  const [timerInterval, setTimerInterval] = useState(null)
 
-  // Start interview mutation
   const startInterviewMutation = useMutation({
     mutationFn: () => startInterview(interviewId),
   })
 
-  // End interview mutation
   const endInterviewMutation = useMutation({
     mutationFn: () => endInterview(interviewId),
   })
 
-  // Submit answer mutation
   const submitAnswerMutation = useMutation({
     mutationFn: (answer) =>
       submitAnswer({
@@ -33,14 +33,12 @@ const useInterviewSession = (interviewId, userId) => {
       }),
   })
 
-  // Get results query
   const resultsQuery = useQuery({
     queryKey: ["interviewResults", interviewId],
     queryFn: () => getInterviewResults(interviewId),
     enabled: false,
   })
 
-  // Initialize socket connection
   useEffect(() => {
     if (!interviewId) return
 
@@ -56,13 +54,7 @@ const useInterviewSession = (interviewId, userId) => {
 
     socketInstance.on("question", (question) => {
       setCurrentQuestion(question)
-      // Add question to transcript
       setTranscript((prev) => [...prev, { type: "ai", text: question }])
-    })
-
-    socketInstance.on("transcript", (answer) => {
-      // This is for receiving our own answers back from the server
-      // We'll handle this differently since we're adding answers directly
     })
 
     socketInstance.on("error", (error) => {
@@ -78,32 +70,44 @@ const useInterviewSession = (interviewId, userId) => {
 
     return () => {
       socketInstance.disconnect()
+      if (timerInterval) clearInterval(timerInterval)
     }
-  }, [interviewId])
+  }, [interviewId, timerInterval])
 
-  // Start the interview
-  const start = useCallback(async () => {
-    try {
-      await startInterviewMutation.mutateAsync()
-      // Socket will handle receiving the first question
-    } catch (error) {
-      console.error("Failed to start interview:", error)
-    }
-  }, [startInterviewMutation])
+  const start = useCallback(
+    async (duration = 15) => {
+      try {
+        await startInterviewMutation.mutateAsync()
+        setInterviewDuration(duration)
+        setTimeRemaining(duration * 60)
 
-  // Submit an answer
+        const interval = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+
+        setTimerInterval(interval)
+      } catch (error) {
+        console.error("Failed to start interview:", error)
+      }
+    },
+    [startInterviewMutation],
+  )
+
   const submitUserAnswer = useCallback(
     async (answer) => {
       try {
-        // Add answer to transcript
         setTranscript((prev) => [...prev, { type: "user", text: answer }])
 
-        // Submit to server
         if (socket) {
           socket.emit("answer", { interviewId, question: currentQuestion, answer })
         }
 
-        // Also submit to API for evaluation
         await submitAnswerMutation.mutateAsync(answer)
       } catch (error) {
         console.error("Failed to submit answer:", error)
@@ -112,16 +116,15 @@ const useInterviewSession = (interviewId, userId) => {
     [interviewId, currentQuestion, socket, submitAnswerMutation],
   )
 
-  // End the interview
   const end = useCallback(async () => {
     try {
       await endInterviewMutation.mutateAsync()
-      // Fetch results
+      if (timerInterval) clearInterval(timerInterval)
       resultsQuery.refetch()
     } catch (error) {
       console.error("Failed to end interview:", error)
     }
-  }, [endInterviewMutation, resultsQuery])
+  }, [endInterviewMutation, resultsQuery, timerInterval])
 
   return {
     currentQuestion,
@@ -135,6 +138,8 @@ const useInterviewSession = (interviewId, userId) => {
     end,
     results: resultsQuery.data?.data,
     isLoadingResults: resultsQuery.isLoading,
+    timeRemaining,
+    interviewDuration,
   }
 }
 

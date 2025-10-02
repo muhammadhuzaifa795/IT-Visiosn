@@ -47,74 +47,6 @@ Return ONLY the JSON object as plain text.
 });
 
 
-
-
-/**
- * Generate a single interview question
- */
-export async function generateQuestion(level, topic, previousQuestions = []) {
-  try {
-    if (!level || !topic || typeof level !== "string" || typeof topic !== "string") {
-      throw new Error("Invalid level or topic")
-    }
-
-    let prompt = `Generate ONE short ${level} level interview question about ${topic}.
-Keep it under 15 words and make it direct and clear.
-Return ONLY the question, no additional text.`
-
-    if (previousQuestions.length > 0) {
-      prompt += `\n\nAvoid these topics already covered:\n${previousQuestions.join("\n")}`
-    }
-
-    const messages = [{ role: "user", content: prompt }]
-    const response = await geminiAdaptor.handler({ messages })
-
-    return response
-      .replace(/^(Question:|Q:)\s*/i, "")
-      .replace(/\?+$/, "?")
-      .trim()
-  } catch (error) {
-    console.error("Error generating question:", error.message)
-    throw new Error(`Failed to generate question: ${error.message}`)
-  }
-}
-
-/**
- * Evaluate answer with AI feedback
- */
-export async function evaluateAnswer(question, answer) {
-  try {
-    if (!question || !answer || typeof question !== "string" || typeof answer !== "string") {
-      throw new Error("Invalid question or answer")
-    }
-
-    const prompt = `Question: ${question}
-Answer: ${answer}
-Evaluate this interview answer and provide:
-1. A score from 1-10 (where 10 is excellent)
-2. Brief constructive feedback (2-3 sentences max)
-3. Key strengths (1-2 points)
-4. Areas for improvement (1-2 points)
-
-Format your response as:
-Score: X/10
-Feedback: [brief feedback]
-Strengths: [key strengths]
-Improvements: [areas to improve]
-
-Keep all sections concise and professional.`
-
-    const messages = [{ role: "user", content: prompt }]
-    return await geminiAdaptor.handler({ messages })
-  } catch (error) {
-    console.error("Error evaluating answer:", error.message)
-    throw new Error(`Failed to evaluate answer: ${error.message}`)
-  }
-}
-
-/**
- * Generate a learning roadmap
- */
 export async function generateRoadmap(topic, level) {
   try {
     if (!topic || !level) {
@@ -152,6 +84,80 @@ Do not include any markdown formatting, code blocks, or additional text.`
   }
 }
 
+
+
+export async function generateQuestion(level, topic, previousQuestions = []) {
+  try {
+    if (!level || !topic || typeof level !== "string" || typeof topic !== "string") {
+      throw new Error("Invalid level or topic")
+    }
+
+    let prompt = `You are acting as a senior interviewer conducting a ${level} level interview.
+Ask ONE realistic interview question on ${topic}.
+Types of questions you may ask (choose naturally):
+- Experience-based (project/role exposure, real company work)
+- Scenario-based (handling production issues, solving problems)
+- Behavioural (teamwork, leadership, communication in ${topic})
+- Technical deep dive (optimisation, debugging, architecture)
+
+Guidelines:
+- Keep it under 20 words
+- Must sound like a real interviewer question
+- Examples: 
+  "How much hands-on experience do you have with ${topic} in projects?"
+  "What challenges did you face while applying ${topic} in production?"
+  "Can you explain a scenario where ${topic} improved project success?"
+
+Return ONLY the question, nothing else.`
+
+    if (previousQuestions.length > 0) {
+      prompt += `\n\nAvoid repeating these already asked:\n${previousQuestions.join("\n")}`
+    }
+
+    const messages = [{ role: "user", content: prompt }]
+    const response = await geminiAdaptor.handler({ messages })
+
+    return response
+      .replace(/^(Question:|Q:)\s*/i, "")
+      .replace(/\?+$/, "?")
+      .trim()
+  } catch (error) {
+    console.error("Error generating question:", error.message)
+    throw new Error(`Failed to generate question: ${error.message}`)
+  }
+}
+
+/**
+ * Evaluate answer with AI feedback
+ */
+export async function evaluateAnswer(question, answer) {
+  try {
+    if (!question || !answer || typeof question !== "string" || typeof answer !== "string") {
+      throw new Error("Invalid question or answer")
+    }
+
+    const prompt = `Question: ${question}
+Answer: ${answer}
+Evaluate this interview answer and provide:
+1. A score from 1-10 (where 10 is excellent)
+2. Brief constructive feedback (2-3 sentences max, like real interview panel notes)
+3. Key strengths (1-2 points)
+4. Areas for improvement (1-2 points)
+
+Format:
+Score: X/10
+Feedback: [concise feedback]
+Strengths: [strengths]
+Improvements: [areas to improve]`
+
+    const messages = [{ role: "user", content: prompt }]
+    return await geminiAdaptor.handler({ messages })
+  } catch (error) {
+    console.error("Error evaluating answer:", error.message)
+    throw new Error(`Failed to evaluate answer: ${error.message}`)
+  }
+}
+
 /**
  * Generate a follow-up question
  */
@@ -161,13 +167,13 @@ export async function generateFollowUpQuestion(topic, level, previousQA) {
 Question: ${previousQA.question}
 Answer: ${previousQA.answer}
 
-Generate a short follow-up question (under 15 words) that:
-1. Builds upon the previous answer
-2. Tests deeper understanding
-3. Is appropriate for ${level} level
-4. Focuses on ${topic}
+Generate ONE realistic follow-up question that:
+- Builds on the candidate's previous answer
+- Pushes them to share examples, challenges, or deeper technical detail
+- Keep it under 15 words
+- Must sound natural like: "Can you give a specific example?" or "What challenges did you face?"
 
-Return ONLY the question, no additional text.`
+Return ONLY the question.`
 
     const messages = [{ role: "user", content: prompt }]
     const response = await geminiAdaptor.handler({ messages })

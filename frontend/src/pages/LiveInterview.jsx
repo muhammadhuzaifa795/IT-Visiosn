@@ -26,6 +26,20 @@ import {
   CoffeeIcon
 } from "lucide-react"
 
+// Voice options with avatars
+const VOICE_OPTIONS = {
+  female: {
+    name: "Female Voice",
+    avatar: "https://avatar.iran.liara.run/public/81",
+    voiceType: "female"
+  },
+  male: {
+    name: "Male Voice", 
+    avatar: "https://avatar.iran.liara.run/public/14",
+    voiceType: "male"
+  }
+}
+
 const LiveInterview = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -34,6 +48,7 @@ const LiveInterview = () => {
   const [isUserAnswering, setIsUserAnswering] = useState(false)
   const [inputMode, setInputMode] = useState("voice")
   const [textInput, setTextInput] = useState("")
+  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS.female)
   const [conversation, setConversation] = useState(() => {
     const saved = localStorage.getItem(`interview_${id}_transcript`)
     return saved ? JSON.parse(saved) : []
@@ -61,7 +76,24 @@ const LiveInterview = () => {
     resetRecording,
   } = useVoiceRecording()
 
-  const { isSpeaking, speak, stopSpeaking } = useTextToSpeech()
+  // Updated hook with voice selection
+  const { isSpeaking, speak, stopSpeaking, setVoice, selectedVoice: ttsVoice } = useTextToSpeech()
+
+  // Set selected voice when component mounts
+  useEffect(() => {
+    const savedVoice = localStorage.getItem(`interview_${id}_voice`)
+    if (savedVoice) {
+      const voice = VOICE_OPTIONS[savedVoice] || VOICE_OPTIONS.female
+      setSelectedVoice(voice)
+      setVoice(voice.voiceType) // Set the voice in TTS hook
+    }
+  }, [id, setVoice])
+
+  // Save voice preference and update TTS voice
+  useEffect(() => {
+    localStorage.setItem(`interview_${id}_voice`, selectedVoice.voiceType)
+    setVoice(selectedVoice.voiceType) // Update TTS voice when selection changes
+  }, [selectedVoice, id, setVoice])
 
   useEffect(() => {
     if (currentQuestion && isInterviewStarted && !hasSpokenCurrentQuestion && !isUserAnswering && !isPaused) {
@@ -95,10 +127,10 @@ const LiveInterview = () => {
     }
   }, [transcript, id])
 
-  const formatTime = (minutes) => {
-    if (minutes === null) return "--:--"
-    const mins = Math.max(0, Math.floor(minutes))
-    const secs = Math.max(0, Math.floor((minutes - mins) * 60))
+  const formatTime = (seconds) => {
+    if (seconds === null) return "--:--"
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
@@ -170,6 +202,10 @@ const LiveInterview = () => {
     resetRecording()
   }
 
+  const handleVoiceSelect = (voiceKey) => {
+    setSelectedVoice(VOICE_OPTIONS[voiceKey])
+  }
+
   const downloadTranscript = () => {
     const transcriptText = conversation.map(item => 
       `${item.type === 'ai' ? 'Interviewer' : 'You'}: ${item.text}`
@@ -192,7 +228,11 @@ const LiveInterview = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-2xl">
-                <BotIcon className="w-8 h-8 text-primary" />
+                <img 
+                  src={selectedVoice.avatar} 
+                  alt="AI Interviewer Avatar"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-base-content">Live AI Interview</h1>
@@ -211,6 +251,31 @@ const LiveInterview = () => {
                   {inputMode === "voice" ? "Text" : "Voice"}
                 </button>
                 
+                {/* Voice Selection Dropdown */}
+                <div className="dropdown dropdown-end">
+                  <button className="btn btn-outline btn-sm" tabIndex={0}>
+                    <Volume2Icon className="w-4 h-4" />
+                    {selectedVoice.name}
+                  </button>
+                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+                    {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
+                      <li key={key}>
+                        <button 
+                          onClick={() => handleVoiceSelect(key)}
+                          className={`flex items-center gap-3 ${selectedVoice.voiceType === key ? 'active' : ''}`}
+                        >
+                          <img 
+                            src={voice.avatar} 
+                            alt={voice.name}
+                            className="w-6 h-6 rounded-full"
+                          />
+                          {voice.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
                 {conversation.length > 0 && (
                   <button className="btn btn-ghost btn-sm" onClick={downloadTranscript}>
                     <DownloadIcon className="w-4 h-4" />
@@ -272,6 +337,36 @@ const LiveInterview = () => {
             className="card bg-base-100 shadow-2xl border border-primary/10 max-w-2xl mx-auto"
           >
             <div className="card-body p-8 text-center">
+              {/* Voice Selection Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Choose Interviewer Voice & Avatar</h3>
+                <div className="flex gap-4 justify-center">
+                  {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
+                    <motion.button
+                      key={key}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
+                        selectedVoice.voiceType === key 
+                          ? 'border-primary bg-primary/10' 
+                          : 'border-base-300 bg-base-200 hover:border-primary/50'
+                      }`}
+                      onClick={() => handleVoiceSelect(key)}
+                    >
+                      <img 
+                        src={voice.avatar} 
+                        alt={voice.name}
+                        className="w-16 h-16 rounded-full object-cover border-2 border-base-300"
+                      />
+                      <span className="font-medium">{voice.name}</span>
+                      {selectedVoice.voiceType === key && (
+                        <div className="badge badge-primary badge-sm">Selected</div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
               <div className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <ZapIcon className="w-12 h-12 text-white" />
               </div>
@@ -291,9 +386,9 @@ const LiveInterview = () => {
                 </div>
                 
                 <div className="stat">
-                  <div className="stat-title">Duration</div>
-                  <div className="stat-value text-lg">{interviewDuration}m</div>
-                  <div className="stat-desc">Total Time</div>
+                  <div className="stat-title">Voice</div>
+                  <div className="stat-value text-lg">{selectedVoice.name.split(' ')[0]}</div>
+                  <div className="stat-desc">Interviewer</div>
                 </div>
                 
                 <div className="stat">
@@ -335,10 +430,15 @@ const LiveInterview = () => {
                 >
                   <div className="card-body">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="card-title flex items-center gap-2">
-                        <BotIcon className="w-5 h-5 text-primary" />
-                        AI Interviewer
-                      </h3>
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={selectedVoice.avatar} 
+                          alt="AI Interviewer Avatar"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+                        />
+                        <h3 className="card-title">AI Interviewer</h3>
+                        <div className="badge badge-outline badge-sm">{ttsVoice}</div>
+                      </div>
                       
                       <div className="flex gap-2">
                         {isSpeaking ? (
@@ -556,13 +656,17 @@ const LiveInterview = () => {
                           className={`chat ${item.type === "ai" ? "chat-start" : "chat-end"}`}
                         >
                           <div className="chat-image avatar">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              item.type === "ai" ? "bg-primary/20" : "bg-secondary/20"
-                            }`}>
+                            <div className="w-10 h-10 rounded-full border-2 border-base-300">
                               {item.type === "ai" ? (
-                                <BotIcon className="w-4 h-4 text-primary" />
+                                <img 
+                                  src={selectedVoice.avatar} 
+                                  alt="AI Interviewer"
+                                  className="w-full h-full object-cover"
+                                />
                               ) : (
-                                <UserIcon className="w-4 h-4 text-secondary" />
+                                <div className="w-full h-full bg-secondary/20 flex items-center justify-center">
+                                  <UserIcon className="w-5 h-5 text-secondary" />
+                                </div>
                               )}
                             </div>
                           </div>
