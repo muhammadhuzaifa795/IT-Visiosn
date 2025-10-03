@@ -24,6 +24,11 @@ import {
   LockIcon,
   CrownIcon,
   SparklesIcon,
+  MessageCircleIcon,
+  BotIcon,
+  XIcon,
+  PlayIcon,
+  PauseIcon,
 } from "lucide-react";
 
 export default function SubscriptionComponent() {
@@ -33,6 +38,7 @@ export default function SubscriptionComponent() {
     cardNumber: "",
     expiry: "",
     cvc: "",
+    name: "",
   });
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -40,6 +46,12 @@ export default function SubscriptionComponent() {
   const { activate, isPending, error } = useActivateSubscription();
   const [message, setMessage] = useState(null);
   const { authUser, isLoading: authLoading, isAuthenticated } = useAuthUser();
+  
+  // AI Assistant State
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [aiMessages, setAiMessages] = useState([]);
+  const [userInput, setUserInput] = useState("");
+  const [isAITyping, setIsAITyping] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -63,6 +75,16 @@ export default function SubscriptionComponent() {
         ease: [0.23, 1, 0.32, 1],
       },
     },
+  };
+
+  // AI Assistant Responses
+  const aiResponses = {
+    greeting: "Hello! I'm your subscription assistant. I can help you choose the right plan, explain features, or answer any questions about our premium offerings!",
+    features: "Our premium plans include: AI Code Generation, Learning Roadmaps, Mock Interviews, Advanced Security, and much more. Which feature are you most interested in?",
+    pricing: "We offer monthly ($100) and yearly ($900) plans. The yearly plan saves you $300 annually and includes all the same great features!",
+    payment: "We accept all major credit cards. Payments are processed securely with SSL encryption and 3D secure authentication.",
+    trial: "All plans include a 14-day free trial. You can cancel anytime during the trial period without any charges.",
+    support: "Premium subscribers get priority 24/7 support with average response time under 2 hours.",
   };
 
   const features = [
@@ -136,6 +158,20 @@ export default function SubscriptionComponent() {
       iconBg: "bg-green-500/10",
       iconColor: "text-green-600",
     },
+    {
+      icon: BotIcon,
+      title: "AI Assistant",
+      description: "24/7 intelligent assistance for all your needs.",
+      features: [
+        "Instant answers to questions",
+        "Personalized recommendations",
+        "Learning guidance",
+        "Technical support",
+      ],
+      gradient: "from-indigo-500/20 to-purple-500/20",
+      iconBg: "bg-indigo-500/10",
+      iconColor: "text-indigo-600",
+    },
   ];
 
   const plans = {
@@ -157,6 +193,46 @@ export default function SubscriptionComponent() {
       features: features,
       popular: true,
     },
+  };
+
+  // Initialize AI Assistant
+  useEffect(() => {
+    if (showAIAssistant && aiMessages.length === 0) {
+      addAIMessage(aiResponses.greeting, "ai");
+    }
+  }, [showAIAssistant]);
+
+  const addAIMessage = (text, sender) => {
+    setAiMessages(prev => [...prev, { text, sender, id: Date.now() }]);
+  };
+
+  const handleAISubmit = async (e) => {
+    e.preventDefault();
+    if (!userInput.trim()) return;
+
+    addAIMessage(userInput, "user");
+    const userMessage = userInput.toLowerCase();
+    setUserInput("");
+    setIsAITyping(true);
+
+    // Simulate AI thinking
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    let response = aiResponses.greeting;
+    if (userMessage.includes("feature") || userMessage.includes("what include")) {
+      response = aiResponses.features;
+    } else if (userMessage.includes("price") || userMessage.includes("cost")) {
+      response = aiResponses.pricing;
+    } else if (userMessage.includes("payment") || userMessage.includes("card")) {
+      response = aiResponses.payment;
+    } else if (userMessage.includes("trial") || userMessage.includes("free")) {
+      response = aiResponses.trial;
+    } else if (userMessage.includes("support") || userMessage.includes("help")) {
+      response = aiResponses.support;
+    }
+
+    addAIMessage(response, "ai");
+    setIsAITyping(false);
   };
 
   const isSubscribed = authUser?.subscription && authUser.subscription !== "free";
@@ -226,6 +302,29 @@ export default function SubscriptionComponent() {
     setShowPaymentModal(true);
   };
 
+  const processPaymentSteps = async () => {
+    const steps = [
+      { name: "initial", message: "Initializing payment...", duration: 800 },
+      { name: "validation", message: "Validating card details...", duration: 1200 },
+      { name: "bank", message: "Contacting bank...", duration: 1500 },
+      { name: "authentication", message: "3D Secure authentication...", duration: 2000 },
+      { name: "verify", message: "Finalizing transaction...", duration: 1000 },
+    ];
+
+    for (const step of steps) {
+      setProcessingStep(step.name);
+      await new Promise(resolve => setTimeout(resolve, step.duration));
+    }
+
+    setProcessingStep(null);
+    setShowSuccessAnimation(true);
+    
+    setTimeout(() => {
+      setShowSuccessAnimation(false);
+      setShowVerificationModal(true);
+    }, 3000);
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     setMessage(null);
@@ -235,7 +334,12 @@ export default function SubscriptionComponent() {
       return;
     }
 
-    const { cardNumber, expiry, cvc } = cardDetails;
+    const { cardNumber, expiry, cvc, name } = cardDetails;
+
+    if (!name.trim()) {
+      setMessage("Please enter cardholder name");
+      return;
+    }
 
     if (!isValidCardNumber(cardNumber)) {
       setMessage("Card number must be 16 or 19 digits");
@@ -253,20 +357,7 @@ export default function SubscriptionComponent() {
     }
 
     setShowPaymentModal(false);
-    setProcessingStep("initial");
-
-    // Simulate payment processing
-    setTimeout(() => setProcessingStep("bank"), 1000);
-    setTimeout(() => setProcessingStep("verify"), 3000);
-    setTimeout(() => {
-      setProcessingStep(null);
-      setShowSuccessAnimation(true);
-    }, 5000);
-
-    setTimeout(() => {
-      setShowSuccessAnimation(false);
-      setShowVerificationModal(true);
-    }, 7000);
+    await processPaymentSteps();
   };
 
   const handleVerifyAndActivate = async () => {
@@ -292,9 +383,115 @@ export default function SubscriptionComponent() {
   const currentPlan = plans[plan];
   const savings = currentPlan.originalPrice - currentPlan.price;
 
+  // Floating AI Assistant Button
+
+
+  // AI Assistant Modal
+  const AIAssistantModal = () => (
+    <AnimatePresence>
+      {showAIAssistant && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            className="bg-base-100 rounded-2xl w-full max-w-md h-[600px] flex flex-col shadow-2xl"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-primary to-secondary p-4 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <BotIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Subscription Assistant</h3>
+                    <p className="text-white/80 text-sm">Ask me about plans & features</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAIAssistant(false)}
+                  className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                >
+                  <XIcon className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {aiMessages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl p-4 ${
+                      message.sender === "user"
+                        ? "bg-primary text-white rounded-br-none"
+                        : "bg-base-300 text-base-content rounded-bl-none"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                </motion.div>
+              ))}
+              {isAITyping && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-start"
+                >
+                  <div className="bg-base-300 text-base-content rounded-2xl rounded-bl-none p-4">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-base-content/50 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-base-content/50 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                      <div className="w-2 h-2 bg-base-content/50 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Input */}
+            <form onSubmit={handleAISubmit} className="p-4 border-t border-base-300">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="Ask about plans, features, or pricing..."
+                  className="input input-bordered flex-1"
+                  disabled={isAITyping}
+                />
+                <button
+                  type="submit"
+                  disabled={isAITyping || !userInput.trim()}
+                  className="btn btn-primary"
+                >
+                  Send
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   if (isSubscribed) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 py-12 px-4 sm:px-6 lg:px-8">
+      
+        <AIAssistantModal />
+        
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -437,6 +634,9 @@ export default function SubscriptionComponent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 py-12 px-4 sm:px-6 lg:px-8">
+      
+      <AIAssistantModal />
+      
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -621,36 +821,66 @@ export default function SubscriptionComponent() {
           </motion.div>
         </motion.div>
 
+        {/* Enhanced Payment Modal */}
         <AnimatePresence>
           {showPaymentModal && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
             >
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="bg-base-100 rounded-lg p-6 max-w-md w-full"
+                className="bg-base-100 rounded-2xl p-6 max-w-md w-full shadow-2xl"
               >
-                <h3 className="text-xl font-bold mb-4">Enter Card Details</h3>
-                <div className="space-y-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold">Enter Card Details</h3>
+                  <button
+                    onClick={() => setShowPaymentModal(false)}
+                    className="btn btn-ghost btn-sm btn-circle"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Cardholder Name</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={cardDetails.name}
+                      onChange={handleCardInput}
+                      placeholder="John Doe"
+                      className="input input-bordered"
+                    />
+                  </div>
+                  
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text">Card Number</span>
                     </label>
-                    <input
-                      type="text"
-                      name="cardNumber"
-                      value={cardDetails.cardNumber}
-                      onChange={handleCardInput}
-                      placeholder="1234 5678 9012 3456"
-                      className="input input-bordered"
-                      maxLength={24}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="cardNumber"
+                        value={cardDetails.cardNumber}
+                        onChange={handleCardInput}
+                        placeholder="1234 5678 9012 3456"
+                        className="input input-bordered w-full pl-12"
+                        maxLength={24}
+                      />
+                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                        <CreditCardIcon className="w-5 h-5 text-base-content/40" />
+                      </div>
+                    </div>
                   </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-control">
                       <label className="label">
@@ -681,6 +911,7 @@ export default function SubscriptionComponent() {
                       />
                     </div>
                   </div>
+                  
                   <div className="flex gap-2 mt-6">
                     <button
                       type="button"
@@ -690,7 +921,7 @@ export default function SubscriptionComponent() {
                       Cancel
                     </button>
                     <motion.button
-                      onClick={handlePaymentSubmit}
+                      type="submit"
                       className="btn btn-primary flex-1"
                       disabled={isPending}
                       whileHover={{ scale: 1.05 }}
@@ -699,12 +930,13 @@ export default function SubscriptionComponent() {
                       {isPending ? <LoaderIcon className="w-5 h-5 animate-spin" /> : "Pay Now"}
                     </motion.button>
                   </div>
-                </div>
+                </form>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Enhanced Processing Animation */}
         <AnimatePresence>
           {processingStep && (
             <motion.div
@@ -717,24 +949,58 @@ export default function SubscriptionComponent() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="bg-base-100 rounded-lg p-6 max-w-md w-full text-center"
+                className="bg-base-100 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl"
               >
-                <LoaderIcon className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-6"
+                >
+                  <ShieldIcon className="w-10 h-10 text-white" />
+                </motion.div>
+                
+                <h3 className="text-xl font-bold mb-4">
                   {processingStep === "initial" && "Processing Payment..."}
+                  {processingStep === "validation" && "Validating Card..."}
                   {processingStep === "bank" && "Contacting Bank..."}
-                  {processingStep === "verify" && "Verifying Transaction..."}
+                  {processingStep === "authentication" && "3D Secure..."}
+                  {processingStep === "verify" && "Finalizing..."}
                 </h3>
-                <p className="text-base-content/70">
-                  {processingStep === "initial" && "Initiating secure payment processing"}
+                
+                <p className="text-base-content/70 mb-6">
+                  {processingStep === "initial" && "Initializing secure payment processing"}
+                  {processingStep === "validation" && "Validating your card details"}
                   {processingStep === "bank" && "Connecting to your bank for authorization"}
+                  {processingStep === "authentication" && "Completing 3D Secure verification"}
                   {processingStep === "verify" && "Finalizing transaction details"}
                 </p>
+
+                <div className="w-full bg-base-300 rounded-full h-2 mb-4">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: 
+                      processingStep === "initial" ? "20%" :
+                      processingStep === "validation" ? "40%" :
+                      processingStep === "bank" ? "60%" :
+                      processingStep === "authentication" ? "80%" :
+                      "100%"
+                    }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-primary h-2 rounded-full"
+                  />
+                </div>
+
+                <div className="flex justify-center space-x-1">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: "0.1s" }} />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: "0.2s" }} />
+                </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Enhanced Success Animation */}
         <AnimatePresence>
           {showSuccessAnimation && (
             <motion.div
@@ -744,23 +1010,42 @@ export default function SubscriptionComponent() {
               transition={{ duration: 1.5 }}
               className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
             >
-              <div className="bg-success rounded-full p-8 relative">
+              <div className="text-center">
                 <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.5, repeat: 2 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="bg-success rounded-full p-8 relative mb-6"
                 >
                   <CheckIcon className="w-16 h-16 text-white" />
+                  <motion.div
+                    className="absolute inset-0 bg-success/50 rounded-full"
+                    animate={{ scale: [1, 1.5, 0], opacity: [0.5, 0.3, 0] }}
+                    transition={{ duration: 1.5, repeat: 1 }}
+                  />
                 </motion.div>
-                <motion.div
-                  className="absolute inset-0 bg-success/50 rounded-full"
-                  animate={{ scale: [1, 1.5, 0], opacity: [0.5, 0.3, 0] }}
-                  transition={{ duration: 1.5 }}
-                />
+                <motion.h3
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-2xl font-bold text-white mb-2"
+                >
+                  Payment Successful!
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-white/80"
+                >
+                  Your subscription has been processed successfully
+                </motion.p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Rest of the component remains the same */}
         <AnimatePresence>
           {showVerificationModal && (
             <motion.div

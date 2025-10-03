@@ -5,7 +5,6 @@ import { getAllPosts, updatePost, deletePost } from '../lib/api';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import useAuthUser from '../hooks/useAuthUser';
-import { useTogglePostLike } from "../hooks/usePostActions";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   SearchIcon,
@@ -15,7 +14,6 @@ import {
   EditIcon,
   Trash2Icon,
   HeartIcon,
-  HeartMinusIcon,
   EyeIcon,
   MessageCircleIcon,
   CalendarIcon,
@@ -24,12 +22,11 @@ import {
   VideoIcon,
   FileIcon,
   PlusIcon,
-  FilterIcon,
   SortAscIcon,
   LoaderIcon,
   XIcon,
-  ShareIcon,
-  BookmarkIcon
+  FilterIcon,
+  UserCheckIcon
 } from 'lucide-react';
 
 const HomePage = () => {
@@ -48,10 +45,9 @@ const HomePage = () => {
   const [visibleCount, setVisibleCount] = useState(12);
   const [layout, setLayout] = useState("grid");
   const [sortBy, setSortBy] = useState("newest");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [filterBy, setFilterBy] = useState("all"); // "all", "my-posts"
   const navigate = useNavigate();
   const { isLoading: userLoading, authUser } = useAuthUser();
-  const toggleLike = useTogglePostLike();
 
   const fetchPosts = async () => {
     try {
@@ -127,6 +123,11 @@ const HomePage = () => {
           (post.description && typeof post.description === 'string' && post.description.toLowerCase().includes(searchQuery.toLowerCase())))
     );
 
+    // Filter by user posts
+    if (filterBy === "my-posts" && authUser) {
+      filtered = filtered.filter(post => post.author?._id === authUser._id);
+    }
+
     // Sort posts
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -141,7 +142,7 @@ const HomePage = () => {
     });
 
     return filtered;
-  }, [posts, searchQuery, sortBy]);
+  }, [posts, searchQuery, sortBy, filterBy, authUser]);
 
   const visiblePosts = filteredAndSortedPosts.slice(0, visibleCount);
 
@@ -236,6 +237,20 @@ const HomePage = () => {
 
               {/* Controls */}
               <div className="flex items-center gap-3">
+                {/* Filter by User Posts */}
+                {authUser && (
+                  <div className="dropdown dropdown-end">
+                    <label tabIndex={0} className="btn btn-outline h-12 gap-2">
+                      <FilterIcon className="w-4 h-4" />
+                      Filter
+                    </label>
+                    <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-48 z-10">
+                      <li><button onClick={() => setFilterBy("all")} className={filterBy === "all" ? "active" : ""}>All Posts</button></li>
+                      <li><button onClick={() => setFilterBy("my-posts")} className={filterBy === "my-posts" ? "active" : ""}>My Posts</button></li>
+                    </ul>
+                  </div>
+                )}
+
                 <div className="dropdown dropdown-end">
                   <label tabIndex={0} className="btn btn-outline h-12 gap-2">
                     <SortAscIcon className="w-4 h-4" />
@@ -266,6 +281,7 @@ const HomePage = () => {
 
               <div className="text-sm text-base-content/60 bg-base-200/50 rounded-full px-4 py-2">
                 {filteredAndSortedPosts.length} of {posts.length} posts
+                {filterBy === "my-posts" && " (My Posts)"}
               </div>
             </div>
           </motion.div>
@@ -285,7 +301,6 @@ const HomePage = () => {
                 const isVideo = attachment.match(/\.(mp4|webm|ogg)$/i);
                 const isImage = attachment.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                 const FileTypeIcon = getFileTypeIcon(attachment);
-                const isLiked = post.likes?.includes(authUser?._id);
                 const isAuthor = authUser?._id === post.author?._id;
 
                 return (
@@ -360,47 +375,46 @@ const HomePage = () => {
                         {post.description}
                       </p>
 
-                      {/* Post Stats */}
-                      <div className="flex items-center justify-between text-sm text-base-content/60 mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1">
-                            <UserIcon className="w-4 h-4" />
-                            <span>{post.author?.fullName || 'Unknown'}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <CalendarIcon className="w-4 h-4" />
-                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                          </div>
+                      {/* Post Meta Information */}
+                      <div className="space-y-3 mb-4">
+                        {/* Author */}
+                        <div className="flex items-center gap-2 text-sm">
+                          <UserIcon className="w-4 h-4 text-base-content/60" />
+                          <span className="text-base-content/80 font-medium">{post.author?.fullName || 'Unknown'}</span>
+                          {isAuthor && (
+                            <span className="badge badge-primary badge-sm">
+                              <UserCheckIcon className="w-3 h-3 mr-1" />
+                              You
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Created Date */}
+                        <div className="flex items-center gap-2 text-sm text-base-content/60">
+                          <CalendarIcon className="w-4 h-4" />
+                          <span>{new Date(post.createdAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}</span>
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      {/* Stats - Only Likes */}
                       <div className="flex items-center justify-between pt-4 border-t border-base-300/30">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleLike.mutate(post._id);
-                          }}
-                          className="flex items-center gap-2 text-base-content/60 hover:text-primary transition-colors"
-                        >
-                          {isLiked ? (
-                            <HeartMinusIcon className="w-5 h-5 text-primary" />
-                          ) : (
-                            <HeartIcon className="w-5 h-5" />
-                          )}
-                          <span>{post.likes?.length || 0}</span>
-                        </button>
-
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1 text-base-content/60">
-                            <MessageCircleIcon className="w-4 h-4" />
-                            <span>{post.comments?.length || 0}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-base-content/60">
-                            <EyeIcon className="w-4 h-4" />
-                            <span>{post.views || 0}</span>
-                          </div>
+                        <div className="flex items-center gap-2 text-base-content/60">
+                          <HeartIcon className="w-5 h-5" />
+                          <span className="font-medium">{post.likes?.length || 0} likes</span>
                         </div>
+
+                        {/* Attachment Indicator */}
+                        {attachment && (
+                          <div className="flex items-center gap-1 text-base-content/40">
+                            <FileTypeIcon className="w-4 h-4" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -446,10 +460,14 @@ const HomePage = () => {
             <div className="w-24 h-24 mx-auto bg-base-200 rounded-full flex items-center justify-center mb-6">
               <MessageCircleIcon className="w-12 h-12 text-base-content/40" />
             </div>
-            <h3 className="text-2xl font-semibold text-base-content mb-3">No posts found</h3>
+            <h3 className="text-2xl font-semibold text-base-content mb-3">
+              {filterBy === "my-posts" ? "No posts found" : "No posts found"}
+            </h3>
             <p className="text-base-content/60 max-w-md mx-auto mb-8">
               {searchQuery 
                 ? "No posts match your search criteria. Try adjusting your search terms."
+                : filterBy === "my-posts" 
+                ? "You haven't created any posts yet. Start sharing your knowledge with the community!"
                 : "The community hasn't posted anything yet. Be the first to share your knowledge!"
               }
             </p>
@@ -467,7 +485,7 @@ const HomePage = () => {
                 className="btn btn-primary gap-2"
               >
                 <PlusIcon className="w-4 h-4" />
-                Create First Post
+                Create Your First Post
               </button>
             )}
           </motion.div>

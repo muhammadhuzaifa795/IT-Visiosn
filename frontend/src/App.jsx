@@ -47,13 +47,16 @@ import InterviewSetupPage from "./pages/InterviewSetupPage.jsx";
 import LiveInterview from "./pages/LiveInterview.jsx";
 import InterviewResultPage from "./pages/InterviewResultPage.jsx";
 import InterviewDashboardPage from "./pages/InterviewDashboardPage.jsx";
-import Jarvis from "./components/Jarvis.jsx";
+import Jarvis from "./components/JarvisIcon.jsx";
+import JarvisChat from "./components/JarvisChat.jsx";
+import ReviewPage from "./pages/ReviewPage.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 
 import Settingspage from "./pages/Settingspage.jsx";
 import AdminSettings from "./pages/AdminSettings.jsx";
 import AdminReports from "./pages/AdminReports.jsx";
 import AdminActivityLogs from "./pages/AdminActivityLogs.jsx";
+import AdminReview from "./pages/AdminReview.jsx";
 import AdminProfilePage from "./pages/AdminProfilePage.jsx";
 import AdminUserProfile from "./pages/AdminUserProfile.jsx";
 
@@ -146,6 +149,16 @@ const App = () => {
             <AdminRoute>
               <Layoutadmin showSidebar={true}>
                 <AdminContacts />
+              </Layoutadmin>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/reviews"
+          element={
+            <AdminRoute>
+              <Layoutadmin showSidebar={true}>
+                <AdminReview />
               </Layoutadmin>
             </AdminRoute>
           }
@@ -543,7 +556,21 @@ const App = () => {
             )
           }
         />
-                <Route
+
+        <Route
+          path="/jarvis/chat"
+          element={
+            isAuthenticated && isOnboarded ? (
+
+              <JarvisChat />
+
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
           path="/resume/upload"
           element={
             isAuthenticated && isOnboarded ? (
@@ -580,7 +607,31 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="/jarvis/chat"
+          element={
+            isAuthenticated && isOnboarded ? (
 
+              <JarvisChat />
+
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/reviews"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ReviewPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
       </Routes>
       <Toaster />
       <Jarvis />

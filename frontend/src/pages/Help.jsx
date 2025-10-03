@@ -561,7 +561,8 @@ const Help = () => {
               Join thousands of users who are already accelerating their learning and career growth with our platform.
             </p>
 
-            <div className="flex flex-wrap gap-4 justify-center">
+         <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/subscription">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -570,17 +571,19 @@ const Help = () => {
                 <SparklesIcon className="w-5 h-5" />
                 Explore Features
               </motion.button>
-              <Link to="/contacts">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="btn btn-outline btn-lg gap-3"
-                >
-                  <MessageCircleIcon className="w-5 h-5" />
-                  Contact Support
-                </motion.button>
-              </Link>
-            </div>
+            </Link>
+
+            <Link to="/contacts">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="btn btn-outline btn-lg gap-3"
+              >
+                <MessageCircleIcon className="w-5 h-5" />
+                Contact Support
+              </motion.button>
+            </Link>
+          </div>
           </div>
         </motion.div>
       </div>

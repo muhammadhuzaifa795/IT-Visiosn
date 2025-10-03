@@ -511,3 +511,41 @@ export const getReportById = async (id) => {
   const res = await axiosInstance.get(`/resume/${id}`);
   return res.data;
 };
+
+
+
+
+// Ask Jarvis a question
+export const askJarvis = async (question) => {
+  const response = await axiosInstance.post("/jarvis/ask", { question });
+  return response.data; // { answer: "...", userData?, sessionId? }
+};
+
+// Get conversation history
+export const getJarvisConversations = async () => {
+  const response = await axiosInstance.get("/jarvis/conversations");
+  return response.data; // array of conversations
+};
+
+export const deleteConversation = async (sessionId) => {
+  const response = await axiosInstance.delete(`/jarvis/conversations/${sessionId}`);
+  return response.data; // { message: "Conversation deleted" }
+};
+
+
+export const addReview = async (reviewData) => {
+  const response = await axiosInstance.post("/reviews", reviewData);
+  return response.data;
+};
+
+// Get Reviews
+export const getReviews = async () => {
+  const response = await axiosInstance.get("/reviews");
+  return response.data;
+};
+
+// Delete Review
+export const deleteReview = async (reviewId) => {
+  const response = await axiosInstance.delete(`/reviews/${reviewId}`);
+  return response.data;
+};

@@ -32,6 +32,8 @@ import ticketRoutes from "./routes/ticket.route.js"
 import contactRoutes from "./routes/contact.route.js"
 import paymentRoutes from "./routes/payment.route.js"
 import resumeRoutes from "./routes/resume.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
+import jarvisRoutes from "./routes/jarvis.route.js";
 import { setSocketIOInstance } from './controllers/post.controller.js';
 import { connectDB } from './lib/db.js';
 
@@ -160,6 +162,8 @@ app.use('/api/leaderboard', protectRoute, leaderboardRoutes);
 app.use('/api/contact', protectRoute, contactRoutes);
 app.use('/api/payment', protectRoute, paymentRoutes); 
 app.use("/api/resumes", resumeRoutes);
+app.use("/api/jarvis", jarvisRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use(
   '/api/inngest',
   serve({

@@ -23,7 +23,11 @@ import {
   PlayIcon,
   ZapIcon,
   TrophyIcon,
-  CoffeeIcon
+  CoffeeIcon,
+  SettingsIcon,
+  SparklesIcon,
+  BrainIcon,
+  TargetIcon
 } from "lucide-react"
 
 // Voice options with avatars
@@ -40,6 +44,14 @@ const VOICE_OPTIONS = {
   }
 }
 
+// Interview duration options
+const DURATION_OPTIONS = [
+  { value: 15, label: "15 minutes", description: "Quick Practice" },
+  { value: 30, label: "30 minutes", description: "Standard Session" },
+  { value: 45, label: "45 minutes", description: "Comprehensive" },
+  { value: 60, label: "60 minutes", description: "Full Mock Interview" }
+]
+
 const LiveInterview = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -49,11 +61,13 @@ const LiveInterview = () => {
   const [inputMode, setInputMode] = useState("voice")
   const [textInput, setTextInput] = useState("")
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS.female)
+  const [selectedDuration, setSelectedDuration] = useState(30) // Default 30 minutes
   const [conversation, setConversation] = useState(() => {
     const saved = localStorage.getItem(`interview_${id}_transcript`)
     return saved ? JSON.parse(saved) : []
   })
   const [isPaused, setIsPaused] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const {
     currentQuestion,
@@ -82,18 +96,25 @@ const LiveInterview = () => {
   // Set selected voice when component mounts
   useEffect(() => {
     const savedVoice = localStorage.getItem(`interview_${id}_voice`)
+    const savedDuration = localStorage.getItem(`interview_${id}_duration`)
+    
     if (savedVoice) {
       const voice = VOICE_OPTIONS[savedVoice] || VOICE_OPTIONS.female
       setSelectedVoice(voice)
-      setVoice(voice.voiceType) // Set the voice in TTS hook
+      setVoice(voice.voiceType)
+    }
+    
+    if (savedDuration) {
+      setSelectedDuration(parseInt(savedDuration))
     }
   }, [id, setVoice])
 
-  // Save voice preference and update TTS voice
+  // Save preferences
   useEffect(() => {
     localStorage.setItem(`interview_${id}_voice`, selectedVoice.voiceType)
-    setVoice(selectedVoice.voiceType) // Update TTS voice when selection changes
-  }, [selectedVoice, id, setVoice])
+    localStorage.setItem(`interview_${id}_duration`, selectedDuration.toString())
+    setVoice(selectedVoice.voiceType)
+  }, [selectedVoice, selectedDuration, id, setVoice])
 
   useEffect(() => {
     if (currentQuestion && isInterviewStarted && !hasSpokenCurrentQuestion && !isUserAnswering && !isPaused) {
@@ -134,10 +155,18 @@ const LiveInterview = () => {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
+  const getTimePercentage = () => {
+    if (!interviewDuration || !timeRemaining) return 100
+    const totalSeconds = interviewDuration * 60
+    return (timeRemaining / totalSeconds) * 100
+  }
+
   const handleStartInterview = async () => {
     try {
-      await start()
+      // Pass duration to start function if your API supports it
+      await start(selectedDuration)
       setIsInterviewStarted(true)
+      setShowSettings(false)
     } catch (error) {
       console.error("Error starting interview:", error)
     }
@@ -242,6 +271,16 @@ const LiveInterview = () => {
             
             <div className="flex items-center gap-4">
               <div className="flex gap-2">
+                {!isInterviewStarted && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setShowSettings(!showSettings)}
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    Settings
+                  </button>
+                )}
+                
                 <button
                   className="btn btn-outline btn-sm"
                   onClick={handleInputModeToggle}
@@ -257,7 +296,7 @@ const LiveInterview = () => {
                     <Volume2Icon className="w-4 h-4" />
                     {selectedVoice.name}
                   </button>
-                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-50">
                     {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
                       <li key={key}>
                         <button 
@@ -303,13 +342,25 @@ const LiveInterview = () => {
             
             {isInterviewStarted && timeRemaining !== null && (
               <>
-                <div className={`badge badge-lg ${timeRemaining <= 5 ? "badge-error" : timeRemaining <= 10 ? "badge-warning" : "badge-primary"}`}>
-                  <ClockIcon className="w-4 h-4 mr-1" />
-                  {formatTime(timeRemaining)} remaining
+                {/* Progress Bar */}
+                <div className="flex-1 max-w-md">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Time Remaining</span>
+                    <span className="font-semibold">{formatTime(timeRemaining)}</span>
+                  </div>
+                  <progress 
+                    className={`progress w-full h-2 ${
+                      getTimePercentage() <= 20 ? "progress-error" : 
+                      getTimePercentage() <= 50 ? "progress-warning" : "progress-primary"
+                    }`}
+                    value={getTimePercentage()} 
+                    max="100"
+                  ></progress>
                 </div>
+
                 <div className="badge badge-lg badge-info">
                   <ClockIcon className="w-4 h-4 mr-1" />
-                  {interviewDuration} min total
+                  {interviewDuration || selectedDuration} min total
                 </div>
               </>
             )}
@@ -331,92 +382,184 @@ const LiveInterview = () => {
         )}
 
         {!isInterviewStarted ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card bg-base-100 shadow-2xl border border-primary/10 max-w-2xl mx-auto"
-          >
-            <div className="card-body p-8 text-center">
-              {/* Voice Selection Section */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4">Choose Interviewer Voice & Avatar</h3>
-                <div className="flex gap-4 justify-center">
-                  {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
-                    <motion.button
-                      key={key}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
-                        selectedVoice.voiceType === key 
-                          ? 'border-primary bg-primary/10' 
-                          : 'border-base-300 bg-base-200 hover:border-primary/50'
-                      }`}
-                      onClick={() => handleVoiceSelect(key)}
-                    >
-                      <img 
-                        src={voice.avatar} 
-                        alt={voice.name}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-base-300"
-                      />
-                      <span className="font-medium">{voice.name}</span>
-                      {selectedVoice.voiceType === key && (
-                        <div className="badge badge-primary badge-sm">Selected</div>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <ZapIcon className="w-12 h-12 text-white" />
-              </div>
-              
-              <h2 className="text-2xl font-bold text-base-content mb-2">Ready to Begin Your Interview?</h2>
-              <p className="text-base-content/70 mb-6">
-                {inputMode === "voice" 
-                  ? "🎤 Voice Mode: Ensure your microphone is ready in a quiet environment."
-                  : "⌨️ Text Mode: Prepare to type your responses."}
-              </p>
-              
-              <div className="stats stats-vertical lg:stats-horizontal shadow bg-base-200 mb-6">
-                <div className="stat">
-                  <div className="stat-title">Mode</div>
-                  <div className="stat-value text-lg">{inputMode === "voice" ? "Voice" : "Text"}</div>
-                  <div className="stat-desc">Response Type</div>
-                </div>
-                
-                <div className="stat">
-                  <div className="stat-title">Voice</div>
-                  <div className="stat-value text-lg">{selectedVoice.name.split(' ')[0]}</div>
-                  <div className="stat-desc">Interviewer</div>
-                </div>
-                
-                <div className="stat">
-                  <div className="stat-title">Questions</div>
-                  <div className="stat-value text-lg">5-10</div>
-                  <div className="stat-desc">Estimated</div>
-                </div>
-              </div>
-
-              <button
-                className="btn btn-primary btn-lg w-full gap-3 shadow-lg hover:shadow-xl transition-all"
-                onClick={handleStartInterview}
-                disabled={isStarting || !isConnected}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Settings Panel */}
+            {showSettings && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="lg:col-span-1"
               >
-                {isStarting ? (
-                  <>
-                    <div className="loading loading-spinner loading-sm"></div>
-                    Starting Interview...
-                  </>
-                ) : (
-                  <>
-                    <PlayIcon className="w-5 h-5" />
-                    Start Interview
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
+                <div className="card bg-base-100 shadow-xl border border-primary/10 sticky top-8">
+                  <div className="card-body">
+                    <h3 className="card-title flex items-center gap-2">
+                      <SettingsIcon className="w-5 h-5" />
+                      Interview Settings
+                    </h3>
+                    
+                    {/* Duration Selection */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-semibold">Interview Duration</span>
+                      </label>
+                      <div className="space-y-2">
+                        {DURATION_OPTIONS.map((option) => (
+                          <label key={option.value} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all hover:bg-base-200">
+                            <input
+                              type="radio"
+                              name="duration"
+                              value={option.value}
+                              checked={selectedDuration === option.value}
+                              onChange={(e) => setSelectedDuration(parseInt(e.target.value))}
+                              className="radio radio-primary"
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium">{option.label}</div>
+                              <div className="text-sm text-base-content/60">{option.description}</div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Voice Selection */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-semibold">Interviewer Voice</span>
+                      </label>
+                      <div className="space-y-2">
+                        {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
+                          <label key={key} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all hover:bg-base-200">
+                            <input
+                              type="radio"
+                              name="voice"
+                              value={key}
+                              checked={selectedVoice.voiceType === key}
+                              onChange={(e) => handleVoiceSelect(e.target.value)}
+                              className="radio radio-primary"
+                            />
+                            <img 
+                              src={voice.avatar} 
+                              alt={voice.name}
+                              className="w-8 h-8 rounded-full"
+                            />
+                            <span className="font-medium">{voice.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Start Interview Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`card bg-base-100 shadow-2xl border border-primary/10 ${showSettings ? 'lg:col-span-2' : 'lg:col-span-3'}`}
+            >
+              <div className="card-body p-8 text-center">
+                {/* Voice Selection Section */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
+                    <SparklesIcon className="w-5 h-5 text-primary" />
+                    Choose Your Interviewer
+                  </h3>
+                  <div className="flex gap-4 justify-center">
+                    {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
+                      <motion.button
+                        key={key}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${
+                          selectedVoice.voiceType === key 
+                            ? 'border-primary bg-primary/10 shadow-lg' 
+                            : 'border-base-300 bg-base-200 hover:border-primary/50'
+                        }`}
+                        onClick={() => handleVoiceSelect(key)}
+                      >
+                        <img 
+                          src={voice.avatar} 
+                          alt={voice.name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-base-300"
+                        />
+                        <span className="font-medium">{voice.name}</span>
+                        {selectedVoice.voiceType === key && (
+                          <div className="badge badge-primary badge-sm">Selected</div>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <BrainIcon className="w-12 h-12 text-white" />
+                </div>
+                
+                <h2 className="text-2xl font-bold text-base-content mb-2">Ready to Begin Your Interview?</h2>
+                <p className="text-base-content/70 mb-6">
+                  {inputMode === "voice" 
+                    ? "🎤 Voice Mode: Ensure your microphone is ready in a quiet environment."
+                    : "⌨️ Text Mode: Prepare to type your responses."}
+                </p>
+                
+                <div className="stats stats-vertical lg:stats-horizontal shadow bg-base-200 mb-6">
+                  <div className="stat">
+                    <div className="stat-title">Mode</div>
+                    <div className="stat-value text-lg">{inputMode === "voice" ? "Voice" : "Text"}</div>
+                    <div className="stat-desc">Response Type</div>
+                  </div>
+                  
+                  <div className="stat">
+                    <div className="stat-title">Duration</div>
+                    <div className="stat-value text-lg">{selectedDuration}m</div>
+                    <div className="stat-desc">Total Time</div>
+                  </div>
+                  
+                  <div className="stat">
+                    <div className="stat-title">Voice</div>
+                    <div className="stat-value text-lg">{selectedVoice.name.split(' ')[0]}</div>
+                    <div className="stat-desc">Interviewer</div>
+                  </div>
+                  
+                  <div className="stat">
+                    <div className="stat-title">Questions</div>
+                    <div className="stat-value text-lg">5-10</div>
+                    <div className="stat-desc">Estimated</div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    className="btn btn-primary btn-lg w-full gap-3 shadow-lg hover:shadow-xl transition-all"
+                    onClick={handleStartInterview}
+                    disabled={isStarting || !isConnected}
+                  >
+                    {isStarting ? (
+                      <>
+                        <div className="loading loading-spinner loading-sm"></div>
+                        Starting Interview...
+                      </>
+                    ) : (
+                      <>
+                        <PlayIcon className="w-5 h-5" />
+                        Start {selectedDuration}-Minute Interview
+                      </>
+                    )}
+                  </button>
+                  
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setShowSettings(!showSettings)}
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    {showSettings ? "Hide Settings" : "Show Settings"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* Question Panel */}
@@ -436,8 +579,10 @@ const LiveInterview = () => {
                           alt="AI Interviewer Avatar"
                           className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
                         />
-                        <h3 className="card-title">AI Interviewer</h3>
-                        <div className="badge badge-outline badge-sm">{ttsVoice}</div>
+                        <div>
+                          <h3 className="card-title">AI Interviewer</h3>
+                          <p className="text-sm text-base-content/60">{selectedVoice.name}</p>
+                        </div>
                       </div>
                       
                       <div className="flex gap-2">
@@ -463,7 +608,9 @@ const LiveInterview = () => {
                     </div>
                     
                     <div className="prose prose-lg max-w-none">
-                      <p className="text-lg leading-relaxed">{currentQuestion}</p>
+                      <p className="text-lg leading-relaxed bg-base-200 rounded-lg p-4 border-l-4 border-primary">
+                        {currentQuestion}
+                      </p>
                     </div>
                     
                     {isSpeaking && (
@@ -496,22 +643,30 @@ const LiveInterview = () => {
                   <h3 className="card-title flex items-center gap-2 mb-4">
                     <UserIcon className="w-5 h-5 text-secondary" />
                     Your Response
+                    {inputMode === "voice" && (
+                      <div className="badge badge-outline badge-sm">Voice Mode</div>
+                    )}
+                    {inputMode === "text" && (
+                      <div className="badge badge-outline badge-sm">Text Mode</div>
+                    )}
                   </h3>
 
                   {inputMode === "voice" ? (
                     <div className="space-y-6">
                       <div className="flex flex-col items-center justify-center">
-                        <button
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                           className={`btn btn-circle btn-lg mb-4 transition-all duration-300 ${
                             isRecording 
                               ? "btn-error animate-pulse shadow-lg" 
-                              : "btn-primary hover:scale-110"
+                              : "btn-primary hover:shadow-xl"
                           }`}
                           onClick={handleVoiceToggle}
                           disabled={!currentQuestion || isSpeaking}
                         >
                           {isRecording ? <StopCircleIcon className="w-8 h-8" /> : <MicIcon className="w-8 h-8" />}
-                        </button>
+                        </motion.button>
                         
                         <div className="text-center">
                           {isSpeaking ? (
@@ -531,7 +686,7 @@ const LiveInterview = () => {
                                   />
                                 ))}
                               </div>
-                              <span>Recording... Speak now</span>
+                              <span className="font-medium">Recording... Speak now</span>
                             </div>
                           ) : (
                             <span className="text-base-content/60">
@@ -547,8 +702,8 @@ const LiveInterview = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           className="space-y-4"
                         >
-                          <div className="bg-base-200 rounded-lg p-4 min-h-24">
-                            <p className="whitespace-pre-wrap">{voiceTranscript}</p>
+                          <div className="bg-base-200 rounded-lg p-4 min-h-24 border-2 border-secondary/20">
+                            <p className="whitespace-pre-wrap text-lg">{voiceTranscript}</p>
                           </div>
                           
                           <div className="flex gap-2 justify-end">
@@ -578,16 +733,16 @@ const LiveInterview = () => {
                   ) : (
                     <div className="space-y-4">
                       <textarea
-                        className="textarea textarea-bordered w-full min-h-32 resize-none bg-base-200"
-                        placeholder="Type your answer here..."
+                        className="textarea textarea-bordered w-full min-h-32 resize-none bg-base-200 text-lg p-4"
+                        placeholder="Type your answer here... Be detailed and professional."
                         value={textInput}
                         onChange={(e) => setTextInput(e.target.value)}
                         disabled={!currentQuestion}
                       />
                       
-                      <div className="flex gap-2 justify-between">
+                      <div className="flex gap-2 justify-between items-center">
                         <div className="text-sm text-base-content/60">
-                          {textInput.length} characters
+                          {textInput.length} characters • {textInput.split(/\s+/).filter(word => word.length > 0).length} words
                         </div>
                         
                         <div className="flex gap-2">
@@ -608,7 +763,7 @@ const LiveInterview = () => {
                             ) : (
                               <SendIcon className="w-4 h-4" />
                             )}
-                            Submit
+                            Submit Answer
                           </button>
                         </div>
                       </div>
@@ -623,18 +778,37 @@ const LiveInterview = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="card bg-base-100 shadow-xl border border-base-300/30"
+              className="card bg-base-100 shadow-xl border border-base-300/30 sticky top-8 h-fit max-h-[80vh]"
             >
-              <div className="card-body">
+              <div className="card-body p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="card-title flex items-center gap-2">
-                    <TrophyIcon className="w-5 h-5" />
-                    Interview Transcript
+                  <h3 className="card-title flex items-center gap-2 text-lg">
+                    <TargetIcon className="w-5 h-5 text-primary" />
+                    Interview Progress
                   </h3>
                   <div className="badge badge-primary">{conversation.length} messages</div>
                 </div>
 
-                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                {/* Progress Stats */}
+                <div className="space-y-4 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Time Elapsed:</span>
+                    <span className="font-semibold">
+                      {interviewDuration && timeRemaining 
+                        ? `${Math.floor((interviewDuration * 60 - timeRemaining) / 60)}:${((interviewDuration * 60 - timeRemaining) % 60).toString().padStart(2, '0')}`
+                        : '0:00'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Questions Answered:</span>
+                    <span className="font-semibold">
+                      {conversation.filter(item => item.type === 'human').length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
                   <AnimatePresence>
                     {conversation.length === 0 ? (
                       <motion.div
@@ -656,7 +830,7 @@ const LiveInterview = () => {
                           className={`chat ${item.type === "ai" ? "chat-start" : "chat-end"}`}
                         >
                           <div className="chat-image avatar">
-                            <div className="w-10 h-10 rounded-full border-2 border-base-300">
+                            <div className="w-8 h-8 rounded-full border-2 border-base-300">
                               {item.type === "ai" ? (
                                 <img 
                                   src={selectedVoice.avatar} 
@@ -665,22 +839,22 @@ const LiveInterview = () => {
                                 />
                               ) : (
                                 <div className="w-full h-full bg-secondary/20 flex items-center justify-center">
-                                  <UserIcon className="w-5 h-5 text-secondary" />
+                                  <UserIcon className="w-4 h-4 text-secondary" />
                                 </div>
                               )}
                             </div>
                           </div>
                           
-                          <div className="chat-header flex items-center gap-2 mb-1">
+                          <div className="chat-header flex items-center gap-2 mb-1 text-xs">
                             {item.type === "ai" ? "AI Interviewer" : "You"}
-                            <time className="text-xs opacity-50">
-                              {new Date(item.timestamp).toLocaleTimeString()}
+                            <time className="opacity-50">
+                              {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </time>
                           </div>
                           
                           <div className={`chat-bubble ${
                             item.type === "ai" ? "chat-bubble-primary" : "chat-bubble-secondary"
-                          }`}>
+                          } text-sm`}>
                             {item.text}
                           </div>
                         </motion.div>
