@@ -48,3 +48,17 @@ export const useAdminClearSubscription = () => {
 
   return { clear: mutate, isPending, error };
 };
+
+// Check if user has active subscription
+export const useHasSubscription = () => {
+  const { authUser } = useAuthUser();
+  
+  const hasActiveSubscription = authUser?.subscriptionStatus === "active";
+  const subscriptionType = authUser?.subscriptionType; // 'basic', 'premium', etc.
+  
+  return { 
+    hasActiveSubscription, 
+    subscriptionType,
+    isProMember: hasActiveSubscription && subscriptionType === "premium"
+  };
+};

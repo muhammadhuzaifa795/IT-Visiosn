@@ -2,7 +2,7 @@ import Ticket from "../models/Ticket.js";
 import Post from "../models/Post.js";
 import RoadMap from "../models/RoadMap.js";
 import Interview from "../models/Interview.js";
-import Leaderboard from "../models/Leaderboard.js";
+import Leaderboard from "../models/LeaderBoard.js";
 import User from "../models/User.js";
 import Conversation from "../models/Conversation.js";
 import { fetchJarvisResponse } from "../services/jarvis.service.js";
@@ -35,6 +35,7 @@ export const askJarvisQuestion = async (req, res) => {
       return res.status(400).json({ error: "Invalid or missing question" });
     }
 
+    // Conversation find or create
     let conversation;
     if (sessionId) {
       conversation = await Conversation.findOne({ _id: sessionId, user: userId });
@@ -51,27 +52,56 @@ export const askJarvisQuestion = async (req, res) => {
     let otherUsersData = "No community data available.";
 
     try {
-      const [tickets, posts, roadmaps, interviews, leaderboard] = await Promise.all([
+      // user leaderboard aggregation (sum of points)
+      const leaderboardAgg = await Leaderboard.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: "$user",
+            totalPoints: { $sum: "$points" }
+          }
+        }
+      ]);
+
+      const userTotalPoints = leaderboardAgg.length > 0 ? leaderboardAgg[0].totalPoints : 0;
+
+      const [tickets, posts, roadmaps, interviews] = await Promise.all([
         Ticket.find({ createdBy: userId }).select("title status priority deadline").lean(),
         Post.find({ author: userId }).select("title description tags createdAt").lean(),
         RoadMap.find({ user: userId }).select("goal level weeks progress").lean(),
-        Interview.find({ user: userId }).select("topic level status duration scheduledAt").lean(),
-        Leaderboard.find({ user: userId }).select("ticket points rank").lean(),
+        Interview.find({ user: userId }).select("topic level status duration scheduledAt").lean()
       ]);
 
-      if (tickets.length > 0 || posts.length > 0 || roadmaps.length > 0) {
+      if (tickets.length > 0 || posts.length > 0 || roadmaps.length > 0 || interviews.length > 0 || userTotalPoints > 0) {
         userData = `
 USER DATA:
-${tickets.length > 0 ? `- TICKETS (${tickets.length}): ${tickets.map(t => `${t.title} [${t.status}]`).join(', ')}` : ''}
-${posts.length > 0 ? `- POSTS (${posts.length}): ${posts.map(p => p.title).join(', ')}` : ''}
-${roadmaps.length > 0 ? `- ROADMAPS (${roadmaps.length}): ${roadmaps.map(r => `${r.goal} (${r.level})`).join(', ')}` : ''}
-${interviews.length > 0 ? `- INTERVIEWS (${interviews.length}): ${interviews.map(i => `${i.topic} [${i.status}]`).join(', ')}` : ''}
-${leaderboard.length > 0 ? `- LEADERBOARD: Rank ${leaderboard[0].rank} with ${leaderboard[0].points} points` : ''}
+${tickets.length > 0 ? `- TICKETS (${tickets.length}): ${tickets.map(t => `${t.title} [${t.status}]`).join(", ")}` : ""}
+${posts.length > 0 ? `- POSTS (${posts.length}): ${posts.map(p => p.title).join(", ")}` : ""}
+${roadmaps.length > 0 ? `- ROADMAPS (${roadmaps.length}): ${roadmaps.map(r => `${r.goal} (${r.level})`).join(", ")}` : ""}
+${interviews.length > 0 ? `- INTERVIEWS (${interviews.length}): ${interviews.map(i => `${i.topic} [${i.status}]`).join(", ")}` : ""}
+${userTotalPoints > 0 ? `- LEADERBOARD: You have ${userTotalPoints} points` : ""}
         `.trim();
       }
 
+      // Community data
       const [topLeaderboard, recentTickets, popularPosts] = await Promise.all([
-        Leaderboard.find({}).sort({ points: -1 }).limit(3).populate("user", "fullName").lean(),
+        Leaderboard.aggregate([
+          {
+            $group: {
+              _id: "$user",
+              totalPoints: { $sum: "$points" }
+            }
+          },
+          { $sort: { totalPoints: -1 } },
+          { $limit: 3 }
+        ]).then(async (leaders) => {
+          return Promise.all(
+            leaders.map(async (lb, idx) => {
+              const user = await Post.populate(lb, { path: "_id", select: "fullName", model: "User" });
+              return { rank: idx + 1, user: user._id.fullName, points: lb.totalPoints };
+            })
+          );
+        }),
         Ticket.find({ createdBy: { $ne: userId } })
           .select("title status createdBy createdAt")
           .populate("createdBy", "fullName")
@@ -89,25 +119,18 @@ ${leaderboard.length > 0 ? `- LEADERBOARD: Rank ${leaderboard[0].rank} with ${le
       if (topLeaderboard.length > 0 || recentTickets.length > 0 || popularPosts.length > 0) {
         otherUsersData = `
 COMMUNITY DATA:
-${topLeaderboard.length > 0 
-  ? `- TOP PERFORMERS: ${topLeaderboard.map((lb, idx) => `${idx + 1}. ${lb.user.fullName} (${lb.points} pts)`).join(', ')}` 
-  : ''}
+${topLeaderboard.length > 0 ? `- TOP PERFORMERS: ${topLeaderboard.map(lb => `${lb.rank}. ${lb.user} (${lb.points} pts)`).join(", ")}` : ""}
 
-${recentTickets.length > 0 
-  ? `- RECENT TICKETS: ${recentTickets.map(t => `${t.title} (${t.description}) by ${t.createdBy.fullName}`).join(', ')}` 
-  : ''}
+${recentTickets.length > 0 ? `- RECENT TICKETS: ${recentTickets.map(t => `${t.title} by ${t.createdBy.fullName}`).join(", ")}` : ""}
 
-${popularPosts.length > 0 
-  ? `- POPULAR POSTS: ${popularPosts.map(p => `${p.title} (${p.description}) by ${p.author.fullName}`).join(', ')}` 
-  : ''}
-
+${popularPosts.length > 0 ? `- POPULAR POSTS: ${popularPosts.map(p => `${p.title} (${p.description}) by ${p.author.fullName}`).join(", ")}` : ""}
         `.trim();
       }
     } catch (dbError) {
       console.log("Database query failed, using static info only:", dbError.message);
     }
 
-    const cleanQuestion = question.replace(/\*\*/g, '').replace(/\*/g, '').trim();
+    const cleanQuestion = question.replace(/\*\*/g, "").replace(/\*/g, "").trim();
 
     const prompt = `
 You are Jarvis, an advanced AI assistant for Codezynx platform. 
@@ -117,8 +140,8 @@ You are ONLY allowed to answer questions about:
 - Community data (Top performers, Popular posts, Recent activity)
 
 STRICT RULE:
-- If the question is about coding, general knowledge, or anything outside this platform, 
-  politely respond with: "I can only answer questions related to the Codezynx platform, your data, and the community."
+If the question is about coding, general knowledge, or anything outside this platform, 
+reply: "I can only answer questions related to the Codezynx platform, your data, and the community."
 
 Static Platform Information:
 ${staticInfo}
@@ -128,58 +151,40 @@ ${userData}
 ${otherUsersData}
 
 Current Question: ${cleanQuestion}
-Previous Conversation: ${conversation.messages.slice(-3).map(m => `${m.role}: ${m.text}`).join('\n')}
+Previous Conversation: ${conversation.messages.slice(-3).map(m => `${m.role}: ${m.text}`).join("\n")}
 
 Guidelines:
-- Answer platform questions from Static Information
-- Answer user-specific questions from USER DATA if available
-- Answer community questions from COMMUNITY DATA if available  
-- If data is not available, say you don't have that information
-- If question is outside platform scope, respond with the STRICT RULE
-- Keep responses clear and natural
-- Avoid markdown formatting, use plain text
-- Use simple line breaks for readability
-- Be honest about data limitations
-${isVoice ? '- Keep responses concise for voice' : ''}
-
+- Answer only from available data
+- If data missing, say you don't have that info
+- No markdown, plain text only
+${isVoice ? "- Keep response short for voice" : ""}
 Response:
     `.trim();
 
     const answer = await fetchJarvisResponse(prompt);
 
     const cleanAnswer = answer
-      .replace(/\*\*/g, '')
-      .replace(/\*/g, '')
-      .replace(/#{1,6}/g, '')
-      .replace(/```[\s\S]*?```/g, '')
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/#{1,6}/g, "")
+      .replace(/```[\s\S]*?```/g, "")
       .trim();
 
-    conversation.messages.push({
-      role: 'user',
-      text: cleanQuestion,
-      timestamp: new Date()
-    });
-    conversation.messages.push({
-      role: 'assistant',
-      text: cleanAnswer,
-      timestamp: new Date()
-    });
+    conversation.messages.push({ role: "user", text: cleanQuestion, timestamp: new Date() });
+    conversation.messages.push({ role: "assistant", text: cleanAnswer, timestamp: new Date() });
     await conversation.save();
 
     return res.status(200).json({
       answer: cleanAnswer,
       sessionId: conversation._id,
-      userData: { tickets: [], posts: [], roadmaps: [], interviews: [], leaderboard: [] },
       conversationHistory: conversation.messages
     });
-
   } catch (err) {
     console.error("Jarvis controller error:", err.message);
-    const fallbackResponse = "I'm experiencing technical difficulties. Please try again in a moment.";
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Failed to process request",
-      answer: fallbackResponse,
-      sessionId: null 
+      answer: "I'm experiencing technical difficulties. Please try again in a moment.",
+      sessionId: null
     });
   }
 };

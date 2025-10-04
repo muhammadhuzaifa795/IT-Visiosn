@@ -9,12 +9,14 @@ import Ticket from "../models/Ticket.js";
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select('-password')
-    res.status(200).json({ users })
+    // Fetch all users except admins
+    const users = await User.find({ role: { $ne: "admin" } }).select('-password');
+    res.status(200).json({ users });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' });
   }
-}
+};
+
 
 export const getAllPosts = async (req, res) => {
   try {

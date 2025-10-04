@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { Toaster, toast } from "react-hot-toast"
-import { Plus, Eye, Ban, UserCheck, Trash2, RefreshCw, Crown, Users, TrendingUp, CreditCard, Search, Filter, Download, Mail, Phone, Calendar, Shield, UserPlus } from "lucide-react"
+import { Eye, Ban, UserCheck, Trash2, Crown, Users, TrendingUp, CreditCard, Search, Filter, Download, Mail, Phone, Calendar, Shield, Sparkles, Target, BarChart3 } from "lucide-react"
 import { useNavigate } from "react-router"
-import { getAllUsers, deleteUserById, createUser, toggleBanUser } from "../lib/api"
+import { getAllUsers, deleteUserById, toggleBanUser } from "../lib/api"
 import { useMutation } from "@tanstack/react-query"
-import { useAdminClearSubscription } from "../hooks/useSubscription"
+import { motion, AnimatePresence } from "framer-motion"
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([])
   const [filteredUsers, setFilteredUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAddUserForm, setShowAddUserForm] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterRole, setFilterRole] = useState("all")
   const [filterSubscription, setFilterSubscription] = useState("all")
@@ -26,15 +25,6 @@ const AdminUsers = () => {
     bannedUsers: 0,
     adminUsers: 0
   })
-  const [newUser, setNewUser] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    role: "user",
-  })
-
-  const { clear: clearSubscription, isPending: isClearPending } = useAdminClearSubscription();
 
   const navigate = useNavigate()
 
@@ -160,50 +150,6 @@ const AdminUsers = () => {
     }
   }
 
-  const handleClearSubscription = async (userId) => {
-    if (window.confirm("Are you sure you want to clear this user's subscription? This will downgrade them to free plan.")) {
-      try {
-        await clearSubscription(userId)
-        toast.success("Subscription cleared successfully!")
-        fetchUsers() // Refresh the list
-      } catch (err) {
-        toast.error("Failed to clear subscription")
-      }
-    }
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setNewUser({ ...newUser, [name]: value })
-  }
-
-  const handleAddUser = async (e) => {
-    e.preventDefault()
-
-    const userToCreate = { ...newUser }
-
-    if (userToCreate.phone === "") {
-      delete userToCreate.phone
-    }
-
-    try {
-      await createUser(userToCreate)
-      toast.success("User created successfully!")
-      setShowAddUserForm(false)
-      setNewUser({
-        fullName: "",
-        email: "",
-        phone: "",
-        password: "",
-        role: "user",
-      })
-      fetchUsers()
-    } catch (err) {
-      console.error("Create User Error:", err)
-      toast.error(err.response?.data?.error || "Failed to create user.")
-    }
-  }
-
   const getSubscriptionBadge = (subscription) => {
     const badges = {
       free: "badge-ghost",
@@ -216,38 +162,35 @@ const AdminUsers = () => {
   const getSubscriptionText = (subscription) => {
     const texts = {
       free: "Free",
-      monthly: "Monthly Pro",
+      monthly: "Monthly",
       yearly: "Yearly Pro"
     }
     return texts[subscription] || "Free"
   }
 
-  const getSubscriptionColor = (subscription) => {
-    const colors = {
-      free: "text-gray-600",
-      monthly: "text-blue-600",
-      yearly: "text-orange-600"
-    }
-    return colors[subscription] || "text-gray-600"
-  }
-
-  const StatCard = ({ title, value, icon: Icon, color, description }) => (
-    <div className="card bg-base-100 shadow-lg border border-base-300/30 hover:shadow-xl transition-all duration-300 hover:scale-105">
-      <div className="card-body p-4">
+  const StatCard = ({ title, value, icon: Icon, color, description, index }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      whileHover={{ scale: 1.05, y: -5 }}
+      className="card bg-base-100/80 backdrop-blur-xl shadow-2xl border border-base-300/30 rounded-2xl overflow-hidden"
+    >
+      <div className="card-body p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold text-base-content">{value}</p>
-            <p className="text-sm text-base-content/60 mt-1">{title}</p>
+            <p className="text-3xl font-bold text-base-content mb-1">{value}</p>
+            <p className="text-sm text-base-content/60 font-semibold">{title}</p>
             {description && (
               <p className="text-xs text-base-content/40 mt-1">{description}</p>
             )}
           </div>
-          <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
-            <Icon className={`w-6 h-6 ${color.replace('text-', 'text-')}`} />
+          <div className={`p-3 rounded-2xl bg-gradient-to-br ${color} bg-opacity-10`}>
+            <Icon className={`w-6 h-6 ${color.replace('from-', 'text-').replace(' to-.*', '')}`} />
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 
   const exportUsers = () => {
@@ -279,94 +222,116 @@ const AdminUsers = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200/50 to-base-100 p-6">
-      {/* <Toaster position="top-right" /> */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'rgba(var(--b1), 0.95)',
+            color: 'hsl(var(--bc))',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(var(--bc), 0.1)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+          },
+        }}
+      />
       
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+      {/* Enhanced Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             User Management
           </h1>
-          <p className="text-base-content/60 mt-2">Manage all users and their subscriptions</p>
+          <p className="text-base-content/60 mt-2 text-lg">Manage all users and their subscriptions</p>
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={exportUsers}
-            className="btn btn-outline gap-2"
-            disabled={filteredUsers.length === 0}
-          >
-            <Download size={18} />
-            Export
-          </button>
-          {/* <button 
-            onClick={() => setShowAddUserForm(!showAddUserForm)} 
-            className="btn btn-primary gap-2 shadow-lg hover:shadow-xl"
-          >
-            <UserPlus size={18} />
-            Add User
-          </button> */}
-        </div>
-      </div>
+        <motion.button 
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={exportUsers}
+          className="btn btn-primary btn-lg gap-3 shadow-lg hover:shadow-xl"
+          disabled={filteredUsers.length === 0}
+        >
+          <Download size={20} />
+          Export Users
+          <Sparkles size={16} />
+        </motion.button>
+      </motion.div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+      {/* Enhanced Statistics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-6 mb-8">
         <StatCard 
           title="Total Users" 
           value={stats.totalUsers} 
           icon={Users} 
-          color="text-blue-500"
+          color="from-blue-500 to-cyan-500"
+          index={0}
         />
         <StatCard 
           title="Subscribed" 
           value={stats.subscribedUsers} 
           icon={Crown} 
-          color="text-green-500"
+          color="from-green-500 to-emerald-500"
           description={`${stats.totalUsers ? Math.round((stats.subscribedUsers / stats.totalUsers) * 100) : 0}% of total`}
+          index={1}
         />
         <StatCard 
-          title="Monthly Pro" 
+          title="Monthly" 
           value={stats.monthlySubscriptions} 
           icon={TrendingUp} 
-          color="text-purple-500"
+          color="from-purple-500 to-pink-500"
+          index={2}
         />
         <StatCard 
           title="Yearly Pro" 
           value={stats.yearlySubscriptions} 
           icon={CreditCard} 
-          color="text-orange-500"
+          color="from-orange-500 to-red-500"
+          index={3}
         />
         <StatCard 
           title="Free Users" 
           value={stats.freeUsers} 
           icon={Users} 
-          color="text-gray-500"
+          color="from-gray-500 to-slate-500"
+          index={4}
         />
         <StatCard 
           title="Admins" 
           value={stats.adminUsers} 
           icon={Shield} 
-          color="text-red-500"
+          color="from-red-500 to-rose-500"
+          index={5}
         />
         <StatCard 
           title="Banned" 
           value={stats.bannedUsers} 
           icon={Ban} 
-          color="text-error"
+          color="from-error to-red-700"
+          index={6}
         />
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-base-100 rounded-2xl shadow-lg p-6 mb-8 border border-base-300/30">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+      {/* Enhanced Search and Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-base-100/80 backdrop-blur-xl rounded-2xl shadow-2xl p-6 mb-8 border border-base-300/30"
+      >
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
           <div className="flex-1 w-full lg:max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-base-content/40 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search users by name, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input input-bordered w-full pl-10"
+                className="input input-bordered input-lg w-full pl-12 bg-base-200/50"
               />
             </div>
           </div>
@@ -375,7 +340,7 @@ const AdminUsers = () => {
             <select 
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="select select-bordered select-sm"
+              className="select select-bordered select-md bg-base-200/50"
             >
               <option value="all">All Roles</option>
               <option value="user">User</option>
@@ -385,305 +350,232 @@ const AdminUsers = () => {
             <select 
               value={filterSubscription}
               onChange={(e) => setFilterSubscription(e.target.value)}
-              className="select select-bordered select-sm"
+              className="select select-bordered select-md bg-base-200/50"
             >
               <option value="all">All Subscriptions</option>
               <option value="free">Free</option>
-              <option value="monthly">Monthly Pro</option>
+              <option value="monthly">Monthly</option>
               <option value="yearly">Yearly Pro</option>
             </select>
             
             <select 
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="select select-bordered select-sm"
+              className="select select-bordered select-md bg-base-200/50"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="banned">Banned</option>
             </select>
             
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setSearchTerm("")
                 setFilterRole("all")
                 setFilterSubscription("all")
                 setFilterStatus("all")
               }}
-              className="btn btn-ghost btn-sm gap-2"
+              className="btn btn-ghost btn-md gap-2"
             >
-              <Filter size={16} />
-              Reset
-            </button>
+              <Filter size={18} />
+              Reset Filters
+            </motion.button>
           </div>
         </div>
         
         {/* Results count */}
         <div className="mt-4 flex justify-between items-center">
-          <p className="text-sm text-base-content/60">
-            Showing {filteredUsers.length} of {users.length} users
+          <p className="text-sm text-base-content/60 font-medium">
+            Showing <span className="text-primary font-bold">{filteredUsers.length}</span> of <span className="font-bold">{users.length}</span> users
           </p>
           {searchTerm && (
             <p className="text-sm text-base-content/60">
-              Search: "{searchTerm}"
+              Search results for: <span className="text-primary font-semibold">"{searchTerm}"</span>
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Add User Modal */}
-      {showAddUserForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-base-100 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Add New User
-              </h2>
-              <button 
-                onClick={() => setShowAddUserForm(false)}
-                className="btn btn-ghost btn-sm btn-circle"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddUser} className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Full Name</span>
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={newUser.fullName}
-                  onChange={handleInputChange}
-                  className="input input-bordered w-full"
-                  required
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={newUser.email}
-                  onChange={handleInputChange}
-                  className="input input-bordered w-full"
-                  required
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Phone (Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={newUser.phone}
-                  onChange={handleInputChange}
-                  className="input input-bordered w-full"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={newUser.password}
-                  onChange={handleInputChange}
-                  className="input input-bordered w-full"
-                  required
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Role</span>
-                </label>
-                <select
-                  name="role"
-                  value={newUser.role}
-                  onChange={handleInputChange}
-                  className="select select-bordered w-full"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <button type="submit" className="btn btn-success flex-1 gap-2">
-                  <UserPlus size={18} />
-                  Create User
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddUserForm(false)} 
-                  className="btn btn-ghost"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Users Table */}
+      {/* Enhanced Users Table */}
       {loading ? (
-        <div className="text-center py-12">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="text-base-content/60 mt-4">Loading users...</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-16 bg-base-100/80 backdrop-blur-xl rounded-2xl shadow-lg border border-base-300/30"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="loading loading-spinner loading-lg text-primary mb-4"
+          />
+          <p className="text-base-content/60 text-lg">Loading users...</p>
+        </motion.div>
       ) : (
-        <div className="bg-base-100 rounded-2xl shadow-lg overflow-hidden border border-base-300/30">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-base-100/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-base-300/30"
+        >
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead className="bg-base-200/50">
                 <tr>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">User</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Contact</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Role</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Subscription</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Status</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Joined</th>
-                  <th className="px-6 py-4 text-left font-semibold text-base-content">Actions</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">User</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Contact</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Role</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Subscription</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Status</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Joined</th>
+                  <th className="px-6 py-5 text-left font-bold text-base-content text-lg">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <tr key={user._id} className="hover:bg-base-200/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="avatar">
-                            <div className="w-10 h-10 rounded-full bg-base-300 overflow-hidden">
-                              <img
-                                src={user.profilePic || "/placeholder.svg?height=40&width=40"}
-                                alt={user.fullName}
-                                className="w-full h-full object-cover"
-                              />
+                <AnimatePresence>
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user, index) => (
+                      <motion.tr
+                        key={user._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="hover:bg-base-200/30 transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="avatar">
+                              <div className="w-12 h-12 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-base-100 transition-all group-hover:ring-secondary">
+                                <img
+                                  src={user.profilePic || "/placeholder.svg?height=48&width=48"}
+                                  alt={user.fullName}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-bold text-base-content text-lg">{user.fullName}</div>
+                              <div className="text-sm text-base-content/60 font-mono">ID: {user._id.slice(-8)}</div>
                             </div>
                           </div>
-                          <div>
-                            <div className="font-semibold text-base-content">{user.fullName}</div>
-                            <div className="text-sm text-base-content/60">ID: {user._id.slice(-8)}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="w-4 h-4 text-base-content/40" />
-                            <span className="text-base-content">{user.email}</span>
-                          </div>
-                          {user.phone && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Phone className="w-4 h-4 text-base-content/40" />
-                              <span className="text-base-content/70">{user.phone}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3 text-base">
+                              <Mail className="w-4 h-4 text-primary" />
+                              <span className="text-base-content font-medium">{user.email}</span>
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`badge badge-lg ${user.role === "admin" ? "badge-primary" : "badge-ghost"}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <span className={`badge ${getSubscriptionBadge(user.subscription)}`}>
-                            {getSubscriptionText(user.subscription)}
+                            {user.phone && (
+                              <div className="flex items-center gap-3 text-base">
+                                <Phone className="w-4 h-4 text-secondary" />
+                                <span className="text-base-content/70">{user.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`badge badge-lg font-bold ${user.role === "admin" ? "badge-primary text-primary-content" : "badge-ghost"}`}>
+                            {user.role}
                           </span>
-                          {user.subscriptionExpiresAt && (
-                            <div className="flex items-center gap-1 text-xs text-base-content/60">
-                              <Calendar className="w-3 h-3" />
-                              <span>Expires {new Date(user.subscriptionExpiresAt).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`badge ${user.isBanned ? "badge-error" : "badge-success"}`}>
-                          {user.isBanned ? "Banned" : "Active"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-base-content/60">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-1 flex-wrap">
-                          <button 
-                            onClick={() => handleViewProfile(user._id)} 
-                            className="btn btn-ghost btn-sm btn-square"
-                            title="View Profile"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          
-                          {user.subscription !== "free" && (
-                            <button
-                              onClick={() => handleClearSubscription(user._id)}
-                              className="btn btn-ghost btn-sm btn-square text-warning"
-                              disabled={isClearPending}
-                              title="Clear Subscription"
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-2">
+                            <span className={`badge badge-lg font-bold ${getSubscriptionBadge(user.subscription)}`}>
+                              {getSubscriptionText(user.subscription)}
+                            </span>
+                            {user.subscriptionExpiresAt && (
+                              <div className="flex items-center gap-2 text-xs text-base-content/60">
+                                <Calendar className="w-3 h-3" />
+                                <span>Expires {new Date(user.subscriptionExpiresAt).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`badge badge-lg font-bold ${user.isBanned ? "badge-error text-error-content" : "badge-success text-success-content"}`}>
+                            {user.isBanned ? "Banned" : "Active"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-base text-base-content/60 font-medium">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button 
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleViewProfile(user._id)} 
+                              className="btn btn-ghost btn-sm btn-circle text-info hover:bg-info/20"
+                              title="View Profile"
                             >
-                              <RefreshCw size={16} />
-                            </button>
+                              <Eye size={18} />
+                            </motion.button>
+                            
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleToggleBan(user._id, user.isBanned)}
+                              className={`btn btn-ghost btn-sm btn-circle ${user.isBanned ? "text-success hover:bg-success/20" : "text-error hover:bg-error/20"}`}
+                              disabled={isBanPending}
+                              title={user.isBanned ? "Unban User" : "Ban User"}
+                            >
+                              {user.isBanned ? <UserCheck size={18} /> : <Ban size={18} />}
+                            </motion.button>
+                            
+                            <motion.button 
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleDelete(user._id)} 
+                              className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/20"
+                              title="Delete User"
+                            >
+                              <Trash2 size={18} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-16 text-center">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex flex-col items-center gap-4"
+                        >
+                          <Users className="w-16 h-16 text-base-content/30" />
+                          <div>
+                            <p className="text-base-content/60 text-lg font-semibold mb-2">No users found</p>
+                            <p className="text-base-content/40 text-sm">Try adjusting your search or filters</p>
+                          </div>
+                          {(searchTerm || filterRole !== "all" || filterSubscription !== "all" || filterStatus !== "all") && (
+                            <motion.button 
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                setSearchTerm("")
+                                setFilterRole("all")
+                                setFilterSubscription("all")
+                                setFilterStatus("all")
+                              }}
+                              className="btn btn-primary btn-sm gap-2"
+                            >
+                              <Filter size={16} />
+                              Clear all filters
+                            </motion.button>
                           )}
-                          
-                          <button
-                            onClick={() => handleToggleBan(user._id, user.isBanned)}
-                            className={`btn btn-ghost btn-sm btn-square ${user.isBanned ? "text-success" : "text-error"}`}
-                            disabled={isBanPending}
-                            title={user.isBanned ? "Unban User" : "Ban User"}
-                          >
-                            {user.isBanned ? <UserCheck size={16} /> : <Ban size={16} />}
-                          </button>
-                          
-                          <button 
-                            onClick={() => handleDelete(user._id)} 
-                            className="btn btn-ghost btn-sm btn-square text-error"
-                            title="Delete User"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        </motion.div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Users className="w-12 h-12 text-base-content/30" />
-                        <p className="text-base-content/60">No users found</p>
-                        {(searchTerm || filterRole !== "all" || filterSubscription !== "all" || filterStatus !== "all") && (
-                          <button 
-                            onClick={() => {
-                              setSearchTerm("")
-                              setFilterRole("all")
-                              setFilterSubscription("all")
-                              setFilterStatus("all")
-                            }}
-                            className="btn btn-ghost btn-sm"
-                          >
-                            Clear filters
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
+                  )}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   )
