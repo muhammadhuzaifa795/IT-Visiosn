@@ -6,12 +6,12 @@ import analyzeTicket from "../../services/ticket.service.v2.js";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
+  host: process.env.SMTP_HOST, // smtp.gmail.com
+  port: 465,
+  secure: true, // true for 465 (SSL)
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER, // your gmail
+    pass: process.env.SMTP_PASS, // app password
   },
 });
 
